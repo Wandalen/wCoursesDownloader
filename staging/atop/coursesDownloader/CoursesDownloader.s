@@ -64,6 +64,16 @@ var init = function( o )
   if( !self.request )
   self.request = require('request');
 
+  if( !self.config )
+  self.config  = require('./config.js');
+
+  if( !self.userData )
+  {
+    self.userData = {};
+    self.userData.email = 'wcoursera@gmail.com';
+    self.userData.password = '17159922';
+  }
+
 }
 
 //
@@ -71,7 +81,8 @@ var init = function( o )
 var _login = function()
 {
   var self = this;
-  var request = self.request.defaults({ jar: true });
+  self.request = self.request.defaults({ jar: true });
+  var config = self.config;
 
   var _getCSRF3 = function( cookies )
   {
@@ -86,30 +97,53 @@ var _login = function()
     return token;
   }
 
-  request('https://www.coursera.org/?authMode=login', function ( err, res, body )
+  self.request( config.loginPageUrl, function ( err, res, body )
   {
-  var cookies = res.headers['set-cookie'];
-  var csrf3_token = _getCSRF3( cookies );
-  request.post
-  ({
-    url:'https://www.coursera.org/api/login/v3Ssr?csrf3-token=' + csrf3_token,
-    form:
-    {
-      email : self.email,
-      password : self.password
-    }
-   },
-   function( err, res, body)
-   {
-     if( !err )
-     request( 'https://www.coursera.org/account/profile', function ( err, res, body )
+    var cookies = res.headers['set-cookie'];
+    var csrf3_token = _getCSRF3( cookies );
+
+    self.request.post
+    ({
+      url: config.loginApiUrl +'v3Ssr?csrf3-token=' + csrf3_token,
+      form:
+      {
+        email : self.userData.email,
+        password : self.userData.password
+      }
+     },
+     function( err, res, body)
      {
-       console.log( body );
-     });
-   })
+       if( !err )
+       self._getUserCourses( body );
+     })
+    });
+}
+
+//
+
+var _parseCourses = function( src )
+{
+  var self = this;
+  var data = JSON.parse( src );
+  self.userData.courses = data.linked['courses.v1'];
+  console.log( "Courses list: \n" );
+  self.userData.courses .forEach( function( element )
+  {
+    console.log( element.name, ' id : ', element.id, '\n' );
   });
+}
 
+//
 
+var _getUserCourses = function()
+{
+  var self = this;
+  console.log( 'Trying to get courses list.' );
+  self.request( self.config.getUserCoursesUrl, function ( err, res, body )
+  {
+    if( !err )
+    self._parseCourses( body );
+  });
 }
 
 // --
@@ -118,13 +152,13 @@ var _login = function()
 
 var Composes =
 {
-  request : null
+  request : null,
+  config : null,
 }
 
 var Associates =
 {
-  email : 'wcoursera@gmail.com',
-  password : '17159922',
+  userData : null,
 }
 
 var Restricts =
@@ -145,6 +179,9 @@ var Proto =
   init : init,
 
   _login : _login,
+
+  _parseCourses : _parseCourses,
+  _getUserCourses : _getUserCourses,
 
   // relationships
 
