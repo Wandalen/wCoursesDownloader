@@ -28,14 +28,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Wandalen/wColor.git"
+    "url": "https://github.com/Wandalen/wCoursesDownloader.git"
   },
   "bugs": {
-    "url": "https://github.com/Wandalen/wColor/issues"
+    "url": "https://github.com/Wandalen/wCoursesDownloader/issues"
   },
   "dependencies": {
     "wTools": "",
-    "wFiles": ""
+    "wFiles": "",
+    "wConsequence": "",
+    "request": ""
   },
   "devDependencies": {
     "wTesting": ""
