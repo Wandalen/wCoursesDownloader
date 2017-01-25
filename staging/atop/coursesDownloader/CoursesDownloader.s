@@ -27,6 +27,8 @@ if( typeof module !== 'undefined' )
     require( 'wCopyable' );
   }
 
+  require( 'wConsequence' )
+
 }
 
 // constructor
@@ -114,7 +116,11 @@ var _login = function()
      function( err, res, body)
      {
        if( !err )
-       self._getUserCourses( body );
+       self._getUserCourses( body )
+       .ifNoErrorThen( function ()
+       {
+         self._getMaterials( self.userData.courses[ 0 ] );
+       })
      })
     });
 }
@@ -129,7 +135,7 @@ var _parseCourses = function( src )
   console.log( "Courses list: \n" );
   self.userData.courses .forEach( function( element )
   {
-    console.log( element.name, ' id : ', element.id, '\n' );
+    console.log( 'name: ', element.name, ' class_name : ', element.slug, '\n' );
   });
 }
 
@@ -138,11 +144,34 @@ var _parseCourses = function( src )
 var _getUserCourses = function()
 {
   var self = this;
+  var con = new wConsequence;
   console.log( 'Trying to get courses list.' );
   self.request( self.config.getUserCoursesUrl, function ( err, res, body )
   {
     if( !err )
-    self._parseCourses( body );
+    {
+      self._parseCourses( body );
+      con.give();
+    }
+    else
+    con.error( _.err( err ) );
+  });
+
+  return con;
+}
+
+//
+
+var _getMaterials = function ( course )
+{
+  _.assert( _.objectIs( course ) );
+  var self = this;
+  console.log( 'Trying to get matetials for: ', course.name );
+  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
+  self.request( postUrl, function ( err, res, body )
+  {
+    var data = JSON.parse( body );
+    console.log( data.courseMaterial );
   });
 }
 
@@ -182,6 +211,7 @@ var Proto =
 
   _parseCourses : _parseCourses,
   _getUserCourses : _getUserCourses,
+  _getMaterials : _getMaterials,
 
   // relationships
 
