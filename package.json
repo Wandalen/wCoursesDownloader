@@ -1,0 +1,47 @@
+{
+  "name": "wCoursesDownloader",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Module in JavaScript for downloading courses.",
+  "author": "Kostiantyn Wandalen <wtory.net@domainsbyproxy.com>",
+  "contributors": [
+    {
+      "name": "Kostiantyn Wandalen",
+      "email": "wtory.net@domainsbyproxy.com>"
+    },
+    {
+      "name": "Volodymyr M.",
+      "email": "volodymyr.migdal@gmail.com"
+    }
+  ],
+  "main": "staging/atop/coursesDownloader/CoursesDownloader.s",
+  "files": [
+    "staging/amid/color",
+    "production"
+  ],
+  "directories": {
+    "doc": "doc",
+    "main": "staging/atop/coursesDownloader/CoursesDownloader.s"
+  },
+  "scripts": {
+    "make_doc": "./doc.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wandalen/wColor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Wandalen/wColor/issues"
+  },
+  "dependencies": {
+    "wTools": "",
+    "wFiles": ""
+  },
+  "devDependencies": {
+    "wTesting": ""
+  },
+  "keywords": [
+    "wTools",
+    "courses"
+  ]
+}
