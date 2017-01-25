@@ -4,4 +4,4 @@ require( '../staging/atop/coursesDownloader/CoursesDownloader.s' );
 
 var _ = wTools;
 var cd = _.CoursesDownloader();
-cd._login();
+cd.download();

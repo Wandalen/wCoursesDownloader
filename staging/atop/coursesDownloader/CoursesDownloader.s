@@ -87,79 +87,81 @@ var init = function( o )
 
 //
 
+var download = function()
+{
+  var self = this;
+
+  self._login()
+  .ifNoErrorThen( function()
+  {
+    return self._getUserCourses();
+  })
+  .ifNoErrorThen( function ()
+  {
+    self._getMaterials( self.userData.courses[ 0 ] );
+  });
+
+  //need implement methods:
+  //getResourseLinkById, addResourcesToDownloadList, list can be: course name->chapters->resources with links,saveLinkToHardDrive
+}
+
 var _login = function()
 {
   var self = this;
+  var con = new wConsequence;
+
   self.request = self.request.defaults({ jar: true });
 
-  self.request( self.config.loginPageUrl, function ( err, res, body )
+  var payload = { "email": self.userData.email, "password": self.userData.password };
+
+  if( self.config.name === 'coursera' )
   {
-    var cookies = res.headers['set-cookie'];
+    payload[ "webrequest" ] = true;
+  }
 
-    var url = self.config.loginApiUrl;
+  self._prepareHeaders();
 
-    if( self.config.name === 'coursera' )
-    {
-       //!!!need find way to use cookies for coursera login instead of adding csrf3-token to url
-       url += _getCSRF3( cookies )
-    }
-    else
-    self._prepareHeaders( cookies );
+  self.request
+  ({
+      url: self.config.loginApiUrl,
+      method: "POST",
+      json: true,
+      headers: self.config.headers,
+      body: payload
+  },
+  function (err, res,body)
+  {
+    if( err )
+    return con.error( _.err( err ) );
 
-    self.request.post
-    ({
-      url: url,
-      headers :self.config.headers,
-      form:
-      {
-        email : self.userData.email,
-        password : self.userData.password
-      }
-     },
-     function( err, res, body)
-     {
-       if( !err )
-       {
-         if( self.config.name === 'edx' )
-         throw _.err( "now implemented edx get courses section!" );
+    var cookie = res.headers[ 'set-cookie' ].join( ';' );
+    self._prepareHeaders( 'Cookie', cookie );
+    self.userData.auth = 1;
+    con.give();
+  });
 
-         //!!!this section works only for coursera now
-         self._getUserCourses()
-         .ifNoErrorThen( function ()
-         {
-           self._getMaterials( self.userData.courses[ 0 ] );
-         });
-       }
-
-     })
-    });
+  return con;
 }
 
 //
 
-var _getCSRF3 = function( cookies )
-{
-  var src =  cookies[ 0 ];
-  src = src.split( ';' )[ 0 ];
-  src = src.split( '=' );
-
-  var token = src.pop();
-
-  console.log("CSRF3 Token : ", token );
-
-  return token;
-}
-
-//
-
-var _prepareHeaders = function( src )
+var _prepareHeaders = function( name, value )
 {
   var self = this;
 
-  if( !self.config.headers )
-  self.config.headers = src;
+  // if( !self.config.headers )
+  // self.config.headers = src;
 
-  var csrftoken = _getCSRF3( src );
+  // var csrftoken = _getCSRF3( src );
+
+  if( arguments.length === 2 )
+  {
+    _.assert( _.strIs( name ) );
+    _.assert( _.strIs( value ) );
+
+    self.config.headers[ name ] = value;
+    return;
+  }
 
   if( self.config.name === 'edx' )
   {
@@ -167,6 +169,22 @@ var _prepareHeaders = function( src )
     self.config.headers['X-CSRFToken'] = csrftoken;
   }
 
+  if( self.config.name === 'coursera' )
+  {
+    var randomstring = require("randomstring");
+    var csrftoken = randomstring.generate( 20 );
+    var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
+    var csrf2token = randomstring.generate(24)
+    var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
+    self.config.headers =
+    {
+      'Cookie': cookies,
+      'X-CSRFToken': csrftoken,
+      'X-CSRF2-Cookie': csrf2cookie,
+      'X-CSRF2-Token': csrf2token,
+      'Connection': 'keep-alive'
+    }
+  }
 }
 
 //
@@ -188,9 +206,21 @@ var _parseCourses = function( src )
 var _getUserCourses = function()
 {
   var self = this;
+
+  if( !self.userData.auth )
+  return;
+
+  if( self.config.name === 'edx' )
+  throw _.err( "now implemented edx get courses section!" );
+
   var con = new wConsequence;
   console.log( 'Trying to get courses list.' );
-  self.request( self.config.getUserCoursesUrl, function ( err, res, body )
+  self.request
+  ({
+    url : self.config.getUserCoursesUrl,
+    headers : self.config.headers
+  },
+  function ( err, res, body )
   {
     if( !err )
     {
@@ -251,6 +281,8 @@ var Proto =
 {
 
   init : init,
+
+  download : download,
 
   _login : _login,
 

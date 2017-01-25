@@ -34,10 +34,11 @@
     "url": "https://github.com/Wandalen/wCoursesDownloader/issues"
   },
   "dependencies": {
-    "wTools": "",
-    "wFiles": "",
     "wConsequence": "",
-    "request": ""
+    "wFiles": "",
+    "wTools": "",
+    "randomstring": "",
+    "request": "",
   },
   "devDependencies": {
     "wTesting": ""
