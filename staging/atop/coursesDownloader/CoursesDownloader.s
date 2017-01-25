@@ -67,7 +67,14 @@ var init = function( o )
   self.request = require('request');
 
   if( !self.config )
-  self.config  = require('./config.js');
+  {
+    var config = require('./config.js');
+
+    if( self.siteName  )
+    self.config = config[ self.siteName ];
+    else
+    self.config = config[ config.default ];
+  }
 
   if( !self.userData )
   {
@@ -84,29 +91,25 @@ var _login = function()
 {
   var self = this;
   self.request = self.request.defaults({ jar: true });
-  var config = self.config;
 
-  var _getCSRF3 = function( cookies )
-  {
-    var src =  cookies[ 0 ];
-    src = src.split( ';' )[ 0 ];
-    src = src.split( '=' );
-
-    var token = src.pop();
-
-    console.log("CSRF3 Token : ", token );
-
-    return token;
-  }
-
-  self.request( config.loginPageUrl, function ( err, res, body )
+  self.request( self.config.loginPageUrl, function ( err, res, body )
   {
     var cookies = res.headers['set-cookie'];
-    var csrf3_token = _getCSRF3( cookies );
+
+    var url = self.config.loginApiUrl;
+
+    if( self.config.name === 'coursera' )
+    {
+       //!!!need find way to use cookies for coursera login instead of adding csrf3-token to url
+       url += _getCSRF3( cookies )
+    }
+    else
+    self._prepareHeaders( cookies );
 
     self.request.post
     ({
-      url: config.loginApiUrl +'v3Ssr?csrf3-token=' + csrf3_token,
+      url: url,
+      headers :self.config.headers,
       form:
       {
         email : self.userData.email,
@@ -116,13 +119,54 @@ var _login = function()
      function( err, res, body)
      {
        if( !err )
-       self._getUserCourses( body )
-       .ifNoErrorThen( function ()
        {
-         self._getMaterials( self.userData.courses[ 0 ] );
-       })
+         if( self.config.name === 'edx' )
+         throw _.err( "now implemented edx get courses section!" );
+
+         //!!!this section works only for coursera now
+         self._getUserCourses()
+         .ifNoErrorThen( function ()
+         {
+           self._getMaterials( self.userData.courses[ 0 ] );
+         });
+       }
+
      })
     });
+}
+
+//
+
+var _getCSRF3 = function( cookies )
+{
+  var src =  cookies[ 0 ];
+  src = src.split( ';' )[ 0 ];
+  src = src.split( '=' );
+
+  var token = src.pop();
+
+  console.log("CSRF3 Token : ", token );
+
+  return token;
+}
+
+//
+
+var _prepareHeaders = function( src )
+{
+  var self = this;
+
+  if( !self.config.headers )
+  self.config.headers = src;
+
+  var csrftoken = _getCSRF3( src );
+
+  if( self.config.name === 'edx' )
+  {
+    self.config.headers[ 'Referer' ] = self.config.loginPageUrl;
+    self.config.headers['X-CSRFToken'] = csrftoken;
+  }
+
 }
 
 //
@@ -182,12 +226,13 @@ var _getMaterials = function ( course )
 var Composes =
 {
   request : null,
-  config : null,
 }
 
 var Associates =
 {
+  config : null,
   userData : null,
+  siteName : null,
 }
 
 var Restricts =
@@ -212,6 +257,7 @@ var Proto =
   _parseCourses : _parseCourses,
   _getUserCourses : _getUserCourses,
   _getMaterials : _getMaterials,
+  _prepareHeaders : _prepareHeaders,
 
   // relationships
 
