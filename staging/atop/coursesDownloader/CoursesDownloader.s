@@ -114,31 +114,41 @@ var _login = function()
 
   var payload = { "email": self.userData.email, "password": self.userData.password };
 
+  self.config.options =
+  {
+    url: self.config.loginApiUrl,
+    method: "POST",
+    headers : null
+  };
+
   if( self.config.name === 'coursera' )
   {
     payload[ "webrequest" ] = true;
+    self.config.options.json = true;
+    self.config.options.body = payload;
   }
 
-  self._prepareHeaders();
-
-  self.request
-  ({
-      url: self.config.loginApiUrl,
-      method: "POST",
-      json: true,
-      headers: self.config.headers,
-      body: payload
-  },
-  function (err, res,body)
+  if( self.config.name === 'edx' )
   {
-    if( err )
-    return con.error( _.err( err ) );
+    self.config.options.form = payload;
+  }
 
-    var cookie = res.headers[ 'set-cookie' ].join( ';' );
-    self._prepareHeaders( 'Cookie', cookie );
-    self.userData.auth = 1;
-    con.give();
-  });
+  self._prepareHeaders()
+  .ifNoErrorThen( function()
+  {
+    self.request( self.config.options, function (err, res, body)
+    {
+      if( err )
+      return con.error( _.err( err ) );
+
+      var cookie = res.headers[ 'set-cookie' ].join( ';' );
+      self._prepareHeaders( 'Cookie', cookie );
+      self.userData.auth = 1;
+      con.give();
+    });
+  })
+
+
 
   return con;
 }
@@ -148,6 +158,7 @@ var _login = function()
 var _prepareHeaders = function( name, value )
 {
   var self = this;
+  var con = new wConsequence;
 
   // if( !self.config.headers )
   // self.config.headers = src;
@@ -159,14 +170,43 @@ var _prepareHeaders = function( name, value )
     _.assert( _.strIs( name ) );
     _.assert( _.strIs( value ) );
 
-    self.config.headers[ name ] = value;
+    // self.config.headers[ name ] = value;
+
+    self.config.options.headers[ name ] = value;
     return;
   }
 
   if( self.config.name === 'edx' )
   {
-    self.config.headers[ 'Referer' ] = self.config.loginPageUrl;
-    self.config.headers['X-CSRFToken'] = csrftoken;
+    var _getCSRF3 = function( cookies )
+    {
+      var src =  cookies[ 0 ];
+      src = src.split( ';' )[ 0 ];
+      src = src.split( '=' );
+
+      var token = src.pop();
+
+      self.config.options.headers =
+      {
+        'Referer' : self.config.loginPageUrl,
+        'X-CSRFToken' : token
+      }
+
+      con.give();
+    }
+
+    self.request
+    ({
+      url:self.config.loginPageUrl
+    },
+    function( err, res, body )
+    {
+      if( err )
+      return con.error( _.err( err ) );
+
+      _getCSRF3( res.headers[ 'set-cookie' ] );
+    });
+
   }
 
   if( self.config.name === 'coursera' )
@@ -176,7 +216,7 @@ var _prepareHeaders = function( name, value )
     var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
     var csrf2token = randomstring.generate(24)
     var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
-    self.config.headers =
+    self.config.options.headers =
     {
       'Cookie': cookies,
       'X-CSRFToken': csrftoken,
@@ -184,7 +224,11 @@ var _prepareHeaders = function( name, value )
       'X-CSRF2-Token': csrf2token,
       'Connection': 'keep-alive'
     }
+
+    con.give();
   }
+
+  return con;
 }
 
 //
@@ -218,7 +262,7 @@ var _getUserCourses = function()
   self.request
   ({
     url : self.config.getUserCoursesUrl,
-    headers : self.config.headers
+    headers : self.config.options.headers
   },
   function ( err, res, body )
   {
