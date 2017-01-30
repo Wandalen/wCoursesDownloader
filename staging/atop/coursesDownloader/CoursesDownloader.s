@@ -27,6 +27,8 @@ if( typeof module !== 'undefined' )
     require( 'wCopyable' );
   }
 
+  require( 'wConsequence' )
+
 }
 
 // constructor
@@ -61,6 +63,234 @@ var init = function( o )
   if( o )
   self.copy( o );
 
+  if( !self.request )
+  self.request = require('request');
+
+  if( !self.config )
+  {
+    var config = require('./config.js');
+
+    if( self.siteName  )
+    self.config = config[ self.siteName ];
+    else
+    self.config = config[ config.default ];
+  }
+
+  if( !self.userData )
+  {
+    self.userData = {};
+    self.userData.email = 'wcoursera@gmail.com';
+    self.userData.password = '17159922';
+  }
+
+}
+
+//
+
+var download = function()
+{
+  var self = this;
+
+  self._login()
+  .ifNoErrorThen( function()
+  {
+    return self._getUserCourses();
+  })
+  .ifNoErrorThen( function ()
+  {
+    self._getMaterials( self.userData.courses[ 0 ] );
+  });
+
+  //need implement methods:
+  //getResourseLinkById, addResourcesToDownloadList, list can be: course name->chapters->resources with links,saveLinkToHardDrive
+}
+
+var _login = function()
+{
+  var self = this;
+  var con = new wConsequence;
+
+  self.request = self.request.defaults({ jar: true });
+
+  var payload = { "email": self.userData.email, "password": self.userData.password };
+
+  self.config.options =
+  {
+    url: self.config.loginApiUrl,
+    method: "POST",
+    headers : null
+  };
+
+  if( self.config.name === 'coursera' )
+  {
+    payload[ "webrequest" ] = true;
+    self.config.options.json = true;
+    self.config.options.body = payload;
+  }
+
+  if( self.config.name === 'edx' )
+  {
+    self.config.options.form = payload;
+  }
+
+  self._prepareHeaders()
+  .ifNoErrorThen( function()
+  {
+    self.request( self.config.options, function (err, res, body)
+    {
+      if( err )
+      return con.error( _.err( err ) );
+
+      var cookie = res.headers[ 'set-cookie' ].join( ';' );
+      self._prepareHeaders( 'Cookie', cookie );
+      self.userData.auth = 1;
+      con.give();
+    });
+  })
+
+
+
+  return con;
+}
+
+//
+
+var _prepareHeaders = function( name, value )
+{
+  var self = this;
+  var con = new wConsequence;
+
+  // if( !self.config.headers )
+  // self.config.headers = src;
+
+  // var csrftoken = _getCSRF3( src );
+
+  if( arguments.length === 2 )
+  {
+    _.assert( _.strIs( name ) );
+    _.assert( _.strIs( value ) );
+
+    // self.config.headers[ name ] = value;
+
+    self.config.options.headers[ name ] = value;
+    return;
+  }
+
+  if( self.config.name === 'edx' )
+  {
+    var _getCSRF3 = function( cookies )
+    {
+      var src =  cookies[ 0 ];
+      src = src.split( ';' )[ 0 ];
+      src = src.split( '=' );
+
+      var token = src.pop();
+
+      self.config.options.headers =
+      {
+        'Referer' : self.config.loginPageUrl,
+        'X-CSRFToken' : token
+      }
+
+      con.give();
+    }
+
+    self.request
+    ({
+      url:self.config.loginPageUrl
+    },
+    function( err, res, body )
+    {
+      if( err )
+      return con.error( _.err( err ) );
+
+      _getCSRF3( res.headers[ 'set-cookie' ] );
+    });
+
+  }
+
+  if( self.config.name === 'coursera' )
+  {
+    var randomstring = require("randomstring");
+    var csrftoken = randomstring.generate( 20 );
+    var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
+    var csrf2token = randomstring.generate(24)
+    var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
+    self.config.options.headers =
+    {
+      'Cookie': cookies,
+      'X-CSRFToken': csrftoken,
+      'X-CSRF2-Cookie': csrf2cookie,
+      'X-CSRF2-Token': csrf2token,
+      'Connection': 'keep-alive'
+    }
+
+    con.give();
+  }
+
+  return con;
+}
+
+//
+
+var _parseCourses = function( src )
+{
+  var self = this;
+  var data = JSON.parse( src );
+  self.userData.courses = data.linked['courses.v1'];
+  console.log( "Courses list: \n" );
+  self.userData.courses .forEach( function( element )
+  {
+    console.log( 'name: ', element.name, ' class_name : ', element.slug, '\n' );
+  });
+}
+
+//
+
+var _getUserCourses = function()
+{
+  var self = this;
+
+  if( !self.userData.auth )
+  return;
+
+  if( self.config.name === 'edx' )
+  throw _.err( "now implemented edx get courses section!" );
+
+  var con = new wConsequence;
+  console.log( 'Trying to get courses list.' );
+  self.request
+  ({
+    url : self.config.getUserCoursesUrl,
+    headers : self.config.options.headers
+  },
+  function ( err, res, body )
+  {
+    if( !err )
+    {
+      self._parseCourses( body );
+      con.give();
+    }
+    else
+    con.error( _.err( err ) );
+  });
+
+  return con;
+}
+
+//
+
+var _getMaterials = function ( course )
+{
+  _.assert( _.objectIs( course ) );
+  var self = this;
+  console.log( 'Trying to get matetials for: ', course.name );
+  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
+  self.request( postUrl, function ( err, res, body )
+  {
+    var data = JSON.parse( body );
+    console.log( data.courseMaterial );
+  });
 }
 
 // --
@@ -69,10 +299,14 @@ var init = function( o )
 
 var Composes =
 {
+  request : null,
 }
 
 var Associates =
 {
+  config : null,
+  userData : null,
+  siteName : null,
 }
 
 var Restricts =
@@ -91,6 +325,15 @@ var Proto =
 {
 
   init : init,
+
+  download : download,
+
+  _login : _login,
+
+  _parseCourses : _parseCourses,
+  _getUserCourses : _getUserCourses,
+  _getMaterials : _getMaterials,
+  _prepareHeaders : _prepareHeaders,
 
   // relationships
 
