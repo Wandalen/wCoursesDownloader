@@ -27,6 +27,16 @@ if( typeof module !== 'undefined' )
     require( 'wCopyable' );
   }
 
+  if( typeof wLogger === 'undefined' )
+  try
+  {
+    require( '../include/abase/object/printer/printer/Logger.s' );
+  }
+  catch( err )
+  {
+    require( 'wLogger' );
+  }
+
   require( 'wConsequence' )
 
 }
@@ -51,7 +61,7 @@ Self.nameShort = 'CoursesDownloader';
 // inter
 // --
 
-var init = function( o )
+function init( o )
 {
   var self = this;
 
@@ -62,9 +72,6 @@ var init = function( o )
 
   if( o )
   self.copy( o );
-
-  if( !self.request )
-  self.request = require('request');
 
   if( !self.config )
   {
@@ -87,43 +94,55 @@ var init = function( o )
 
 //
 
-var download = function()
+function download()
 {
   var self = this;
 
-  self._login()
+  self.login()
   .ifNoErrorThen( function()
   {
     return self._getUserCourses();
   })
-  .ifNoErrorThen( function ()
+  .ifNoErrorThen( function()
   {
     self._getMaterials( self.userData.courses[ 0 ] );
+  })
+  .thenDo( function( err,got )
+  {
+
+    if( err )
+    throw _.errLogOnce( err );
+
   });
 
-  //need implement methods:
-  //getResourseLinkById, addResourcesToDownloadList, list can be: course name->chapters->resources with links,saveLinkToHardDrive
+  //need implement methods :
+  //getResourseLinkById, addResourcesToDownloadList, list can be : course name->chapters->resources with links,saveLinkToHardDrive
+
 }
 
-var _login = function()
+//
+
+function login()
 {
   var self = this;
-  var con = new wConsequence;
 
-  self.request = self.request.defaults({ jar: true });
+  if( self.verbosity )
+  logger.topicUp( 'Login ..' );
 
-  var payload = { "email": self.userData.email, "password": self.userData.password };
+  self._requestAct = self.Request.defaults({ jar : true });
+
+  var payload = { 'email' : self.userData.email, 'password' : self.userData.password };
 
   self.config.options =
   {
-    url: self.config.loginApiUrl,
-    method: "POST",
+    url : self.config.loginApiUrl,
+    method : 'POST',
     headers : null
   };
 
   if( self.config.name === 'coursera' )
   {
-    payload[ "webrequest" ] = true;
+    payload[ 'webrequest' ] = true;
     self.config.options.json = true;
     self.config.options.body = payload;
   }
@@ -133,52 +152,47 @@ var _login = function()
     self.config.options.form = payload;
   }
 
-  self._prepareHeaders()
-  .ifNoErrorThen( function()
+  return self._prepareHeaders()
+  .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
+  .thenDo( function( err,got )
   {
-    self.request( self.config.options, function (err, res, body)
-    {
-      if( err )
-      return con.error( _.err( err ) );
 
-      var cookie = res.headers[ 'set-cookie' ].join( ';' );
-      self._prepareHeaders( 'Cookie', cookie );
-      self.userData.auth = 1;
-      con.give();
-    });
+    if( self.verbosity )
+    logger.topicDown( 'Login ' + ( err ? 'error' : 'done' ) + '.' );
+
+    if( err )
+    throw _.errLogOnce( err );
+
+    var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
+    self._prepareHeaders( 'Cookie', cookie );
+    self.userData.auth = 1;
+
+    return got;
   })
-
-
-
-  return con;
 }
 
 //
 
-var _prepareHeaders = function( name, value )
+function _prepareHeaders( name, value )
 {
   var self = this;
   var con = new wConsequence;
 
-  // if( !self.config.headers )
-  // self.config.headers = src;
-
-  // var csrftoken = _getCSRF3( src );
+  /* ? */
 
   if( arguments.length === 2 )
   {
     _.assert( _.strIs( name ) );
     _.assert( _.strIs( value ) );
-
-    // self.config.headers[ name ] = value;
-
     self.config.options.headers[ name ] = value;
-    return;
+    return con.give();
   }
+
+  /* */
 
   if( self.config.name === 'edx' )
   {
-    var _getCSRF3 = function( cookies )
+    function _getCSRF3( cookies )
     {
       var src =  cookies[ 0 ];
       src = src.split( ';' )[ 0 ];
@@ -195,34 +209,32 @@ var _prepareHeaders = function( name, value )
       con.give();
     }
 
-    self.request
-    ({
-      url:self.config.loginPageUrl
-    },
-    function( err, res, body )
+    return self._request( self.config.loginPageUrl )
+    .thenDo( function( err, got )
     {
       if( err )
-      return con.error( _.err( err ) );
-
-      _getCSRF3( res.headers[ 'set-cookie' ] );
+      throw _.errLog( err );
+      return _getCSRF3( got.response.headers[ 'set-cookie' ] );
     });
 
   }
 
+  /* */
+
   if( self.config.name === 'coursera' )
   {
-    var randomstring = require("randomstring");
+    var randomstring = require( 'randomstring' );
     var csrftoken = randomstring.generate( 20 );
     var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
-    var csrf2token = randomstring.generate(24)
+    var csrf2token = randomstring.generate( 24 )
     var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
     self.config.options.headers =
     {
-      'Cookie': cookies,
-      'X-CSRFToken': csrftoken,
-      'X-CSRF2-Cookie': csrf2cookie,
-      'X-CSRF2-Token': csrf2token,
-      'Connection': 'keep-alive'
+      'Cookie' : cookies,
+      'X-CSRFToken' : csrftoken,
+      'X-CSRF2-Cookie' : csrf2cookie,
+      'X-CSRF2-Token' : csrf2token,
+      'Connection' : 'keep-alive'
     }
 
     con.give();
@@ -233,21 +245,25 @@ var _prepareHeaders = function( name, value )
 
 //
 
-var _parseCourses = function( src )
+function _parseCourses( src )
 {
   var self = this;
   var data = JSON.parse( src );
-  self.userData.courses = data.linked['courses.v1'];
-  console.log( "Courses list: \n" );
-  self.userData.courses .forEach( function( element )
+
+  self.userData.courses = data.linked[ 'courses.v1' ];
+  logger.log( 'Courses list : \n' );
+
+  self.userData.courses.forEach( function( element )
   {
-    console.log( 'name: ', element.name, ' class_name : ', element.slug, '\n' );
+    logger.log( 'element',element );
+    logger.log( 'name : ', element.name, ' class_name : ', element.slug, '\n' );
   });
+
 }
 
 //
 
-var _getUserCourses = function()
+function _getUserCourses()
 {
   var self = this;
 
@@ -255,42 +271,91 @@ var _getUserCourses = function()
   return;
 
   if( self.config.name === 'edx' )
-  throw _.err( "now implemented edx get courses section!" );
+  throw _.err( 'now implemented edx get courses section!' );
 
-  var con = new wConsequence;
-  console.log( 'Trying to get courses list.' );
-  self.request
+  logger.log( 'Trying to get courses list.' );
+
+  return self._request
   ({
     url : self.config.getUserCoursesUrl,
     headers : self.config.options.headers
-  },
-  function ( err, res, body )
+  })
+  .thenDo( function( err, got )
   {
-    if( !err )
-    {
-      self._parseCourses( body );
-      con.give();
-    }
-    else
-    con.error( _.err( err ) );
+    if( err )
+    throw _.errLogOnce( err );
+
+    self._parseCourses( got.body );
+
+    return got;
   });
 
-  return con;
 }
 
 //
 
-var _getMaterials = function ( course )
+function _getMaterials( course )
 {
   _.assert( _.objectIs( course ) );
   var self = this;
-  console.log( 'Trying to get matetials for: ', course.name );
+
+  logger.log( 'Trying to get matetials for : ', course.name );
+
   var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
-  self.request( postUrl, function ( err, res, body )
+
+  return self._request( postUrl )
+  .thenDo( function( err, got )
   {
-    var data = JSON.parse( body );
-    console.log( data.courseMaterial );
+    if( err )
+    throw _.errLogOnce( err );
+
+    var data = JSON.parse( got.body );
+    logger.log( data.courseMaterial );
+
+    return data
   });
+}
+
+//
+
+function _request( o )
+{
+  var self = this;
+  var con = new wConsequence();
+
+  _.assert( arguments.length === 1 );
+
+  if( _.strIs( o ) )
+  o = { url : o };
+
+  logger.log( 'request' );
+  logger.log( o );
+  logger.log();
+
+  var callback = o.callback;
+  if( callback )
+  _.assert( callback.length === 2,'_request : callback should have 2 arguments : ( err ) and ( got )' );
+
+  o.callback = function requestCallback( err, response, body )
+  {
+
+    var got = { response : response , body : body };
+
+    if( callback )
+    throw _.err( 'not tested' );
+
+    if( callback )
+    con.first( _.routineJoin( undefined,callback,got ) );
+    else
+    con.give( got );
+
+  }
+
+  self._requestAct( o );
+
+  // logger.log( _.diagnosticStack() );
+
+  return con;
 }
 
 // --
@@ -299,14 +364,19 @@ var _getMaterials = function ( course )
 
 var Composes =
 {
-  request : null,
+  verbosity : 1,
 }
 
-var Associates =
+var Aggregates =
 {
   config : null,
   userData : null,
   siteName : null,
+}
+
+var Associates =
+{
+  _requestAct : null,
 }
 
 var Restricts =
@@ -315,6 +385,7 @@ var Restricts =
 
 var Statics =
 {
+  Request : require( 'request' ),
 }
 
 // --
@@ -328,17 +399,24 @@ var Proto =
 
   download : download,
 
-  _login : _login,
+  login : login,
 
   _parseCourses : _parseCourses,
   _getUserCourses : _getUserCourses,
   _getMaterials : _getMaterials,
   _prepareHeaders : _prepareHeaders,
 
+
+  //
+
+  _request : _request,
+
+
   // relationships
 
   constructor : Self,
   Composes : Composes,
+  Aggregates : Aggregates,
   Associates : Associates,
   Restricts : Restricts,
   Statics : Statics,
