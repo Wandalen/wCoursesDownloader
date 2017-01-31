@@ -36,7 +36,7 @@ function init( o )
 
 //
 
-var loginAct = function ()
+function _loginAct()
 {
   var self = this;
 
@@ -45,7 +45,7 @@ var loginAct = function ()
 
 //
 
-var prepareHeadersAct = function()
+function _prepareHeadersAct()
 {
   var self = this;
   var con = new wConsequence();
@@ -80,11 +80,11 @@ var prepareHeadersAct = function()
 
 //
 
-function getUserCoursesAct()
+function _getUserCoursesAct()
 {
   var self = this;
 
-  throw _.err( 'now implemented edx get courses section!' );
+  throw _.err( 'not implemented edx get courses section!' );
 
 }
 
@@ -123,9 +123,10 @@ var Proto =
 
   init : init,
 
-  loginAct : loginAct,
-  prepareHeadersAct : prepareHeadersAct,
-  getUserCoursesAct : getUserCoursesAct,
+  _loginAct : _loginAct,
+  _prepareHeadersAct : _prepareHeadersAct,
+  _getUserCoursesAct : _getUserCoursesAct,
+
 
   // relationships
 
@@ -160,6 +161,6 @@ _.accessorReadOnly( Self.prototype,
 {
 });
 
-_.CoursesDownloader.register( Self );
+_.CoursesDownloader.registerClass( Self );
 
 })();

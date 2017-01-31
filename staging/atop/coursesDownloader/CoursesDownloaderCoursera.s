@@ -36,7 +36,7 @@ function init( o )
 
 //
 
-var loginAct = function ()
+function _loginAct()
 {
   var self = this;
 
@@ -48,7 +48,7 @@ var loginAct = function ()
 
 //
 
-function prepareHeadersAct()
+function _prepareHeadersAct()
 {
   var self = this;
   var con = new wConsequence();
@@ -76,7 +76,7 @@ function prepareHeadersAct()
 
 //
 
-function getUserCoursesAct()
+function _getUserCoursesAct()
 {
   var self = this;
 
@@ -101,7 +101,7 @@ function getUserCoursesAct()
 
 //
 
-function coursesListAct()
+function _coursesListAct()
 {
   var self = this;
   var con = new wConsequence();
@@ -156,10 +156,14 @@ var Proto =
 {
 
   init : init,
-  loginAct : loginAct,
-  prepareHeadersAct : prepareHeadersAct,
-  getUserCoursesAct : getUserCoursesAct,
-  coursesListAct : coursesListAct,
+
+  _loginAct : _loginAct,
+  _prepareHeadersAct : _prepareHeadersAct,
+
+  /* !!! _getUserCoursesAct and _coursesListAct, why two methods for the same problem? */
+
+  _getUserCoursesAct : _getUserCoursesAct,
+  _coursesListAct : _coursesListAct,
 
 
   // relationships
@@ -195,6 +199,6 @@ _.accessorReadOnly( Self.prototype,
 {
 });
 
-_.CoursesDownloader.register( Self );
+_.CoursesDownloader.registerClass( Self );
 
 })();

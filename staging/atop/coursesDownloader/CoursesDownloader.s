@@ -93,7 +93,9 @@ function init( o )
 
 }
 
-var Loader = function( className )
+//
+
+function Loader( className )
 {
   var self = this;
 
@@ -110,7 +112,9 @@ var Loader = function( className )
 
 }
 
-var register = function( )
+//
+
+function registerClass()
 {
   _.assert( arguments.length > 0 );
 
@@ -141,7 +145,7 @@ function login()
     headers : null
   };
 
-  self.loginAct();
+  self._loginAct();
 
   return self.prepareHeaders()
   .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
@@ -185,7 +189,6 @@ function download()
   {
     if( err )
     throw _.errLogOnce( err );
-
   });
 
   //need implement methods :
@@ -212,7 +215,7 @@ function prepareHeaders( name, value )
 
   /* */
 
-  con = self.prepareHeadersAct();
+  con = self._prepareHeadersAct();
 
   return con;
 }
@@ -223,7 +226,7 @@ function coursesList()
 {
   var self = this;
 
-  return self.coursesListAct();
+  return self._coursesListAct();
 }
 
 //
@@ -235,7 +238,7 @@ function getUserCourses()
   if( !self.userData.auth )
   return;
 
-  return self.getUserCoursesAct();
+  return self._getUserCoursesAct();
 }
 
 //
@@ -333,7 +336,7 @@ var Statics =
 {
   Request : require( 'request' ),
   Childs : {},
-  register : register,
+  registerClass : registerClass,
   Loader : Loader,
 }
 
@@ -357,10 +360,10 @@ var Proto =
 
   //Act
 
-  loginAct : null,
-  prepareHeadersAct : null,
-  getUserCoursesAct : null,
-  coursesListAct : null,
+  _loginAct : null,
+  _prepareHeadersAct : null,
+  _getUserCoursesAct : null,
+  _coursesListAct : null,
 
 
   //
