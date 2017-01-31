@@ -80,6 +80,14 @@ var prepareHeadersAct = function()
 
 //
 
+function getUserCoursesAct()
+{
+  var self = this;
+
+  throw _.err( 'now implemented edx get courses section!' );
+
+}
+
 // --
 // relationships
 // --
@@ -117,6 +125,7 @@ var Proto =
 
   loginAct : loginAct,
   prepareHeadersAct : prepareHeadersAct,
+  getUserCoursesAct : getUserCoursesAct,
 
   // relationships
 

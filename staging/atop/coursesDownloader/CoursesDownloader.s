@@ -143,7 +143,7 @@ function login()
 
   self.loginAct();
 
-  return self._prepareHeaders()
+  return self.prepareHeaders()
   .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
   .thenDo( function( err,got )
   {
@@ -155,7 +155,7 @@ function login()
     throw _.errLogOnce( err );
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
-    self._prepareHeaders( 'Cookie', cookie );
+    self.prepareHeaders( 'Cookie', cookie );
     self.userData.auth = 1;
 
     return got;
@@ -171,7 +171,11 @@ function download()
   self.login()
   .ifNoErrorThen( function()
   {
-    return self._getUserCourses();
+    return self.getUserCourses();
+  })
+  .ifNoErrorThen( function()
+  {
+    return self.coursesList();
   })
   .ifNoErrorThen( function()
   {
@@ -179,7 +183,6 @@ function download()
   })
   .thenDo( function( err,got )
   {
-
     if( err )
     throw _.errLogOnce( err );
 
@@ -192,7 +195,7 @@ function download()
 
 //
 
-function _prepareHeaders( name, value )
+function prepareHeaders( name, value )
 {
   var self = this;
   var con = new wConsequence;
@@ -216,51 +219,23 @@ function _prepareHeaders( name, value )
 
 //
 
-function _parseCourses( src )
+function coursesList()
 {
   var self = this;
-  var data = JSON.parse( src );
 
-  self.userData.courses = data.linked[ 'courses.v1' ];
-  logger.log( 'Courses list : \n' );
-
-  self.userData.courses.forEach( function( element )
-  {
-    logger.log( 'element',element );
-    logger.log( 'name : ', element.name, ' class_name : ', element.slug, '\n' );
-  });
-
+  return self.coursesListAct();
 }
 
 //
 
-function _getUserCourses()
+function getUserCourses()
 {
   var self = this;
 
   if( !self.userData.auth )
   return;
 
-  if( self.config.name === 'edx' )
-  throw _.err( 'now implemented edx get courses section!' );
-
-  logger.log( 'Trying to get courses list.' );
-
-  return self._request
-  ({
-    url : self.config.getUserCoursesUrl,
-    headers : self.config.options.headers
-  })
-  .thenDo( function( err, got )
-  {
-    if( err )
-    throw _.errLogOnce( err );
-
-    self._parseCourses( got.body );
-
-    return got;
-  });
-
+  return self.getUserCoursesAct();
 }
 
 //
@@ -375,15 +350,17 @@ var Proto =
 
   login : login,
 
-  _parseCourses : _parseCourses,
-  _getUserCourses : _getUserCourses,
+  coursesList : coursesList,
+  getUserCourses : getUserCourses,
   _getMaterials : _getMaterials,
-  _prepareHeaders : _prepareHeaders,
+  prepareHeaders : prepareHeaders,
 
   //Act
 
   loginAct : null,
   prepareHeadersAct : null,
+  getUserCoursesAct : null,
+  coursesListAct : null,
 
 
   //

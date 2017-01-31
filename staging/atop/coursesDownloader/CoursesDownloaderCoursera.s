@@ -48,7 +48,7 @@ var loginAct = function ()
 
 //
 
-function prepareHeadersAct( name, value )
+function prepareHeadersAct()
 {
   var self = this;
   var con = new wConsequence();
@@ -75,6 +75,52 @@ function prepareHeadersAct( name, value )
 }
 
 //
+
+function getUserCoursesAct()
+{
+  var self = this;
+
+  logger.log( 'Trying to get courses list.' );
+
+  return self._request
+  ({
+    url : self.config.getUserCoursesUrl,
+    headers : self.config.options.headers
+  })
+  .thenDo( function( err, got )
+  {
+    if( err )
+    throw _.errLogOnce( err );
+
+    self.userData.courses = got.body;
+
+    return got;
+  });
+
+}
+
+//
+
+function coursesListAct()
+{
+  var self = this;
+  var con = new wConsequence();
+
+  var data = JSON.parse( self.userData.courses );
+
+  self.userData.courses = data.linked[ 'courses.v1' ];
+  logger.log( 'Courses list : \n' );
+
+  self.userData.courses.forEach( function( element )
+  {
+    logger.log( 'element',element );
+    logger.log( 'name : ', element.name, ' class_name : ', element.slug, '\n' );
+  });
+
+  con.give();
+
+  return con;
+}
 
 // --
 // relationships
@@ -112,6 +158,8 @@ var Proto =
   init : init,
   loginAct : loginAct,
   prepareHeadersAct : prepareHeadersAct,
+  getUserCoursesAct : getUserCoursesAct,
+  coursesListAct : coursesListAct,
 
 
   // relationships
