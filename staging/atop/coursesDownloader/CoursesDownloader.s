@@ -86,38 +86,31 @@ function init( o )
   if( !self.userData )
   {
     self.userData = {};
-    self.userData.email = 'wcoursera@gmail.com';
-    self.userData.password = '17159922';
   }
+
+  if( !self._requestAct )
+  self._requestAct = self.Request.defaults({ jar : true });
 
 }
 
-//
-
-function download()
+var init_static = function()
 {
   var self = this;
 
-  self.login()
-  .ifNoErrorThen( function()
+  // self.Childs.CoursesDownloaderCoursera();
+}
+
+var register = function( )
+{
+  _.assert( arguments.length > 0 );
+
+  for( var a = 0 ; a < arguments.length ; a++ )
   {
-    return self._getUserCourses();
-  })
-  .ifNoErrorThen( function()
-  {
-    self._getMaterials( self.userData.courses[ 0 ] );
-  })
-  .thenDo( function( err,got )
-  {
+    var child = arguments[ a ];
+    this.Childs[ child.nameShort ] = child;
+  }
 
-    if( err )
-    throw _.errLogOnce( err );
-
-  });
-
-  //need implement methods :
-  //getResourseLinkById, addResourcesToDownloadList, list can be : course name->chapters->resources with links,saveLinkToHardDrive
-
+  return this;
 }
 
 //
@@ -129,9 +122,7 @@ function login()
   if( self.verbosity )
   logger.topicUp( 'Login ..' );
 
-  self._requestAct = self.Request.defaults({ jar : true });
-
-  var payload = { 'email' : self.userData.email, 'password' : self.userData.password };
+  var payload = { 'email' : self.config.email, 'password' : self.config.password };
 
   self.config.options =
   {
@@ -172,6 +163,87 @@ function login()
 }
 
 //
+
+function download()
+{
+  var self = this;
+
+  self.login()
+  .ifNoErrorThen( function()
+  {
+    return self._getUserCourses();
+  })
+  .ifNoErrorThen( function()
+  {
+    self._getMaterials( self.userData.courses[ 0 ] );
+  })
+  .thenDo( function( err,got )
+  {
+
+    if( err )
+    throw _.errLogOnce( err );
+
+  });
+
+  //need implement methods :
+  //getResourseLinkById, addResourcesToDownloadList, list can be : course name->chapters->resources with links,saveLinkToHardDrive
+
+}
+
+//
+
+function login()
+{
+  var self = this;
+
+  if( self.verbosity )
+  logger.topicUp( 'Login ..' );
+
+  var payload = { 'email' : self.config.email, 'password' : self.config.password };
+
+  self.config.options =
+  {
+    url : self.config.loginApiUrl,
+    method : 'POST',
+    headers : null
+  };
+
+  if( self.config.name === 'coursera' )
+  {
+    payload[ 'webrequest' ] = true;
+    self.config.options.json = true;
+    self.config.options.body = payload;
+  }
+
+  if( self.config.name === 'edx' )
+  {
+    self.config.options.form = payload;
+  }
+
+  return self._prepareHeaders()
+  .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
+  .thenDo( function( err,got )
+  {
+
+    if( self.verbosity )
+    logger.topicDown( 'Login ' + ( err ? 'error' : 'done' ) + '.' );
+
+    if( err )
+    throw _.errLogOnce( err );
+
+    var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
+    self._prepareHeaders( 'Cookie', cookie );
+    self.userData.auth = 1;
+
+    return got;
+  })
+}
+
+//
+
+var prepareHeadersAct = {}
+prepareHeadersAct.default =
+{}
 
 function _prepareHeaders( name, value )
 {
@@ -386,6 +458,8 @@ var Restricts =
 var Statics =
 {
   Request : require( 'request' ),
+  register : register,
+  Childs : {}
 }
 
 // --
@@ -396,6 +470,7 @@ var Proto =
 {
 
   init : init,
+  init_static : init_static,
 
   download : download,
 
@@ -447,5 +522,12 @@ _.accessorReadOnly( Self.prototype,
 });
 
 wTools[ Self.nameShort ] = _global_[ Self.name ] = Self;
+
+if( typeof module !== 'undefined' )
+{
+  require( './CoursesDownloaderCoursera.s' );
+}
+
+Self.prototype.init_static();
 
 })();
