@@ -36,7 +36,7 @@ function init( o )
 
 //
 
-var _prepareLogin = function ()
+var loginAct = function ()
 {
   var self = this;
 
@@ -45,7 +45,7 @@ var _prepareLogin = function ()
 
 //
 
-var _prepareHeadersAct = function()
+var prepareHeadersAct = function()
 {
   var self = this;
   var con = new wConsequence();
@@ -115,8 +115,8 @@ var Proto =
 
   init : init,
 
-  _prepareLogin : _prepareLogin,
-  _prepareHeadersAct : _prepareHeadersAct,
+  loginAct : loginAct,
+  prepareHeadersAct : prepareHeadersAct,
 
   // relationships
 

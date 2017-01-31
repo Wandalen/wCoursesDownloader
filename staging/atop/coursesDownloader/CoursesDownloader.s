@@ -141,7 +141,7 @@ function login()
     headers : null
   };
 
-  self._prepareLogin();
+  self.loginAct();
 
   return self._prepareHeaders()
   .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
@@ -209,7 +209,7 @@ function _prepareHeaders( name, value )
 
   /* */
 
-  con = self._prepareHeadersAct();
+  con = self.prepareHeadersAct();
 
   return con;
 }
@@ -357,8 +357,8 @@ var Restricts =
 var Statics =
 {
   Request : require( 'request' ),
-  register : register,
   Childs : {},
+  register : register,
   Loader : Loader,
 }
 
@@ -379,6 +379,11 @@ var Proto =
   _getUserCourses : _getUserCourses,
   _getMaterials : _getMaterials,
   _prepareHeaders : _prepareHeaders,
+
+  //Act
+
+  loginAct : null,
+  prepareHeadersAct : null,
 
 
   //
