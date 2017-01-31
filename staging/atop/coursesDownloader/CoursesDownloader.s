@@ -93,11 +93,21 @@ function init( o )
 
 }
 
-var init_static = function()
+var Loader = function( className )
 {
   var self = this;
 
-  // self.Childs.CoursesDownloaderCoursera();
+  if( className === undefined )
+  {
+    return self.Childs[ 'CoursesDownloaderCoursera' ]();
+  }
+  else
+  {
+    _.assert( self.Childs[ className ] );
+
+    return self.Childs[ className ]();
+  }
+
 }
 
 var register = function( )
@@ -122,7 +132,7 @@ function login()
   if( self.verbosity )
   logger.topicUp( 'Login ..' );
 
-  var payload = { 'email' : self.config.email, 'password' : self.config.password };
+  self.config.payload = { 'email' : self.config.email, 'password' : self.config.password };
 
   self.config.options =
   {
@@ -131,17 +141,7 @@ function login()
     headers : null
   };
 
-  if( self.config.name === 'coursera' )
-  {
-    payload[ 'webrequest' ] = true;
-    self.config.options.json = true;
-    self.config.options.body = payload;
-  }
-
-  if( self.config.name === 'edx' )
-  {
-    self.config.options.form = payload;
-  }
+  self._prepareLogin();
 
   return self._prepareHeaders()
   .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
@@ -192,59 +192,6 @@ function download()
 
 //
 
-function login()
-{
-  var self = this;
-
-  if( self.verbosity )
-  logger.topicUp( 'Login ..' );
-
-  var payload = { 'email' : self.config.email, 'password' : self.config.password };
-
-  self.config.options =
-  {
-    url : self.config.loginApiUrl,
-    method : 'POST',
-    headers : null
-  };
-
-  if( self.config.name === 'coursera' )
-  {
-    payload[ 'webrequest' ] = true;
-    self.config.options.json = true;
-    self.config.options.body = payload;
-  }
-
-  if( self.config.name === 'edx' )
-  {
-    self.config.options.form = payload;
-  }
-
-  return self._prepareHeaders()
-  .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
-  .thenDo( function( err,got )
-  {
-
-    if( self.verbosity )
-    logger.topicDown( 'Login ' + ( err ? 'error' : 'done' ) + '.' );
-
-    if( err )
-    throw _.errLogOnce( err );
-
-    var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
-    self._prepareHeaders( 'Cookie', cookie );
-    self.userData.auth = 1;
-
-    return got;
-  })
-}
-
-//
-
-var prepareHeadersAct = {}
-prepareHeadersAct.default =
-{}
-
 function _prepareHeaders( name, value )
 {
   var self = this;
@@ -262,55 +209,7 @@ function _prepareHeaders( name, value )
 
   /* */
 
-  if( self.config.name === 'edx' )
-  {
-    function _getCSRF3( cookies )
-    {
-      var src =  cookies[ 0 ];
-      src = src.split( ';' )[ 0 ];
-      src = src.split( '=' );
-
-      var token = src.pop();
-
-      self.config.options.headers =
-      {
-        'Referer' : self.config.loginPageUrl,
-        'X-CSRFToken' : token
-      }
-
-      con.give();
-    }
-
-    return self._request( self.config.loginPageUrl )
-    .thenDo( function( err, got )
-    {
-      if( err )
-      throw _.errLog( err );
-      return _getCSRF3( got.response.headers[ 'set-cookie' ] );
-    });
-
-  }
-
-  /* */
-
-  if( self.config.name === 'coursera' )
-  {
-    var randomstring = require( 'randomstring' );
-    var csrftoken = randomstring.generate( 20 );
-    var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
-    var csrf2token = randomstring.generate( 24 )
-    var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
-    self.config.options.headers =
-    {
-      'Cookie' : cookies,
-      'X-CSRFToken' : csrftoken,
-      'X-CSRF2-Cookie' : csrf2cookie,
-      'X-CSRF2-Token' : csrf2token,
-      'Connection' : 'keep-alive'
-    }
-
-    con.give();
-  }
+  con = self._prepareHeadersAct();
 
   return con;
 }
@@ -459,7 +358,8 @@ var Statics =
 {
   Request : require( 'request' ),
   register : register,
-  Childs : {}
+  Childs : {},
+  Loader : Loader,
 }
 
 // --
@@ -470,7 +370,6 @@ var Proto =
 {
 
   init : init,
-  init_static : init_static,
 
   download : download,
 
@@ -526,8 +425,9 @@ wTools[ Self.nameShort ] = _global_[ Self.name ] = Self;
 if( typeof module !== 'undefined' )
 {
   require( './CoursesDownloaderCoursera.s' );
+  require( './CoursesDownloaderEdx.s' );
 }
 
-Self.prototype.init_static();
+Self.prototype.Loader();
 
 })();

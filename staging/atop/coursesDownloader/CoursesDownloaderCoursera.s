@@ -36,6 +36,46 @@ function init( o )
 
 //
 
+var _prepareLogin = function ()
+{
+  var self = this;
+
+  self.config.payload[ 'webrequest' ] =  true;
+  self.config.options.json = true;
+  self.config.options.body = self.config.payload;
+
+}
+
+//
+
+function _prepareHeadersAct( name, value )
+{
+  var self = this;
+  var con = new wConsequence();
+
+  /* */
+
+  var randomstring = require( 'randomstring' );
+  var csrftoken = randomstring.generate( 20 );
+  var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
+  var csrf2token = randomstring.generate( 24 )
+  var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
+  self.config.options.headers =
+  {
+    'Cookie' : cookies,
+    'X-CSRFToken' : csrftoken,
+    'X-CSRF2-Cookie' : csrf2cookie,
+    'X-CSRF2-Token' : csrf2token,
+    'Connection' : 'keep-alive'
+  }
+
+  con.give();
+
+  return con;
+}
+
+//
+
 // --
 // relationships
 // --
@@ -70,6 +110,8 @@ var Proto =
 {
 
   init : init,
+  _prepareLogin : _prepareLogin,
+  _prepareHeadersAct : _prepareHeadersAct,
 
 
   // relationships

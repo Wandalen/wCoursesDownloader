@@ -36,6 +36,50 @@ function init( o )
 
 //
 
+var _prepareLogin = function ()
+{
+  var self = this;
+
+  self.config.options.form = self.config.payload;
+}
+
+//
+
+var _prepareHeadersAct = function()
+{
+  var self = this;
+  var con = new wConsequence();
+
+  function _getCSRF3( cookies )
+  {
+    var src =  cookies[ 0 ];
+    src = src.split( ';' )[ 0 ];
+    src = src.split( '=' );
+
+    var token = src.pop();
+
+    self.config.options.headers =
+    {
+      'Referer' : self.config.loginPageUrl,
+      'X-CSRFToken' : token
+    }
+
+    con.give();
+  }
+
+  return self._request( self.config.loginPageUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    throw _.errLog( err );
+    return _getCSRF3( got.response.headers[ 'set-cookie' ] );
+  });
+
+  return con;
+}
+
+//
+
 // --
 // relationships
 // --
@@ -71,6 +115,8 @@ var Proto =
 
   init : init,
 
+  _prepareLogin : _prepareLogin,
+  _prepareHeadersAct : _prepareHeadersAct,
 
   // relationships
 
