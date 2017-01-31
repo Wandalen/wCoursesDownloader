@@ -203,10 +203,13 @@ function prepareHeaders( name, value )
   var self = this;
   var con = new wConsequence;
 
-  /* ? */
+  /* */
 
   if( arguments.length === 2 )
   {
+
+    /* !!! what is it for? */
+
     _.assert( _.strIs( name ) );
     _.assert( _.strIs( value ) );
     self.config.options.headers[ name ] = value;
