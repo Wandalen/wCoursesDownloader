@@ -129,12 +129,18 @@ function registerClass()
 
 //
 
-function login()
+function make()
 {
   var self = this;
 
-  if( self.verbosity )
-  logger.topicUp( 'Login ..' );
+  self._sync = self._make();
+
+  return self;
+}
+
+function _make()
+{
+  var self = this;
 
   self.config.payload = { 'email' : self.config.email, 'password' : self.config.password };
 
@@ -145,9 +151,37 @@ function login()
     headers : null
   };
 
-  self._loginAct();
+  return self._makeAct();
+}
 
-  return self.prepareHeaders()
+//
+
+function login()
+{
+  var self = this;
+
+  self._sync
+  .ifNoErrorThen( function()
+  {
+    self._sync = self._login();
+  });
+
+  return self;
+}
+
+//
+
+function _login()
+{
+  var self = this;
+
+  if( self.verbosity )
+  logger.topicUp( 'Login ..' );
+
+  // if( !self.config.options )
+  // self._make();
+
+  return self._loginPrepareHeaders()
   .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
   .thenDo( function( err,got )
   {
@@ -159,7 +193,7 @@ function login()
     throw _.errLogOnce( err );
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
-    self.prepareHeaders( 'Cookie', cookie );
+    self.updateHeaders( 'Cookie', cookie );
     self.userData.auth = 1;
 
     return got;
@@ -198,29 +232,20 @@ function download()
 
 //
 
-function prepareHeaders( name, value )
+function updateHeaders( name, value )
 {
+  /* !!! what is it for? */
   var self = this;
-  var con = new wConsequence;
+  _.assert( _.strIs( name ) );
+  _.assert( _.strIs( value ) );
+  self.config.options.headers[ name ] = value;
+}
 
-  /* */
+//
 
-  if( arguments.length === 2 )
-  {
+function _loginPrepareHeaders()
+{
 
-    /* !!! what is it for? */
-
-    _.assert( _.strIs( name ) );
-    _.assert( _.strIs( value ) );
-    self.config.options.headers[ name ] = value;
-    return con.give();
-  }
-
-  /* */
-
-  con = self._prepareHeadersAct();
-
-  return con;
 }
 
 //
@@ -229,19 +254,25 @@ function coursesList()
 {
   var self = this;
 
-  return self._coursesListAct();
+  self._sync
+  .ifNoErrorThen( function()
+  {
+    self._sync = self._coursesListAct();
+  });
+
+  return self;
 }
 
 //
 
-function getUserCourses()
+function _coursesList()
 {
   var self = this;
 
   if( !self.userData.auth )
   return;
 
-  return self._getUserCoursesAct();
+  return self._coursesListAct();
 }
 
 //
@@ -354,18 +385,20 @@ var Proto =
 
   download : download,
 
+  make : make,
+  _make : _make,
+
   login : login,
+  _login : _login,
 
   coursesList : coursesList,
-  getUserCourses : getUserCourses,
+  _coursesList : _coursesList,
   _getMaterials : _getMaterials,
-  prepareHeaders : prepareHeaders,
+  updateHeaders : updateHeaders,
+  _loginPrepareHeaders : _loginPrepareHeaders,
 
   //Act
 
-  _loginAct : null,
-  _prepareHeadersAct : null,
-  _getUserCoursesAct : null,
   _coursesListAct : null,
 
 
