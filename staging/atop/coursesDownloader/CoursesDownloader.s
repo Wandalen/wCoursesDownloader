@@ -291,7 +291,7 @@ function _coursesList()
 }
 
 // --
-// etc
+// resources
 // --
 
 function resourcesList( course )
@@ -314,7 +314,9 @@ function _resourcesList( course )
   return con;
 }
 
-//
+// --
+// etc
+// --
 
 function updateHeaders( name, value )
 {
@@ -495,10 +497,14 @@ var Proto =
   _coursesList : _coursesList,
   _coursesListAct : _coursesListAct,
 
-  // etc
+  // resources
 
   resourcesList : resourcesList,
   _resourcesList : _resourcesList,
+
+
+  // etc
+
   updateHeaders : updateHeaders,
   _request : _request,
 
