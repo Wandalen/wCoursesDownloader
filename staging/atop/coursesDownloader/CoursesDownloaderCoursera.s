@@ -75,6 +75,17 @@ function _makePrepareHeadersForLogin()
 
 //
 
+function _coursesListActParse( body )
+{
+  var self = this;
+
+  var data = JSON.parse( body );
+
+  self.userData.courses = data.linked[ 'courses.v1' ];
+}
+
+//
+
 function _coursesListAct()
 {
   var self = this;
@@ -120,13 +131,50 @@ function _coursesListAct()
 
 //
 
-function _coursesListActParse( body )
+
+function _resourcesList( course )
 {
+  _.assert( _.objectIs( course ) );
   var self = this;
 
-  var data = JSON.parse( body );
+  var con = new wConsequence().give();
 
-  self.userData.courses = data.linked[ 'courses.v1' ];
+  logger.log( 'Trying to get resources for : ', course.name );
+
+  if( self.userData.resources[ course.name ] )
+  {
+    if( self.verbosity )
+    logger.log( "Resources:\n", _.toStr( self.userData.resources[ course.name ], { json : 1 } ) );
+
+    return con.give( self.userData.resources[ course.name ] );
+  }
+
+  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
+
+  return self._request( postUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( "Failed to get resources list. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
+
+    if( err )
+    return con.error( err );
+
+    var data = JSON.parse( got.body );
+
+    self.userData.resources[ course.name ] = data.courseMaterial;
+
+    if( self.verbosity )
+    logger.log( "Resources:\n", _.toStr( data.courseMaterial, { json : 1 } ) );
+
+    con.give( self.userData.resources[ course.name ] );
+  });
+
+  return con;
+
 }
 
 // --
@@ -168,6 +216,8 @@ var Proto =
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
   _coursesListAct : _coursesListAct,
+  _resourcesList : _resourcesList,
+
   _coursesListActParse : _coursesListActParse,
 
   // relationships
