@@ -6,6 +6,8 @@
 
 if( typeof module !== 'undefined' )
 {
+  // require( 'wFiles' )
+
 }
 
 // constructor
@@ -89,7 +91,7 @@ function _coursesListActParse( body )
 function _coursesListAct()
 {
   var self = this;
-  var con = new wConsequence().give();
+  var con = Parent.prototype._coursesListAct.call( self );
 
   if( !self.userData.courses )
   {
@@ -124,6 +126,7 @@ function _coursesListAct()
     }
 
     con.give( self.userData.courses );
+    self._coursesListAct.completed = true;
   });
 
   return con;
@@ -134,23 +137,40 @@ function _coursesListAct()
 function _resourcesList( course )
 {
   _.assert( _.objectIs( course ) );
+
   var self = this;
 
-  var con = new wConsequence().give();
+  var con = self._getResourcesList( course );
+
+  if( self.verbosity )
+  {
+    con.ifNoErrorThen( function( resources )
+    {
+      logger.log( "Resources:\n", _.toStr( resources, { levels : 3 } ) );
+
+      con.give( resources );
+    });
+  }
+
+  return con;
+}
+
+//
+
+function _getResourcesList( course )
+{
+  var self = this;
+
+  var con = new wConsequence();
 
   logger.log( 'Trying to get resources for : ', course.name );
 
   if( self.userData.resources[ course.name ] )
-  {
-    if( self.verbosity )
-    logger.log( "Resources:\n", _.toStr( self.userData.resources[ course.name ], { json : 1 } ) );
-
-    return con.give( self.userData.resources[ course.name ] );
-  }
+  return con.give( self.userData.resources[ course.name ] );
 
   var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
 
-  return self._request( postUrl )
+  self._request( postUrl )
   .thenDo( function( err, got )
   {
     if( err )
@@ -166,14 +186,79 @@ function _resourcesList( course )
 
     self.userData.resources[ course.name ] = data.courseMaterial;
 
-    if( self.verbosity )
-    logger.log( "Resources:\n", _.toStr( data.courseMaterial, { json : 1 } ) );
-
     con.give( self.userData.resources[ course.name ] );
   });
 
   return con;
+}
 
+//
+
+function makeDownloadsList( resources )
+{
+  var self = this;
+  var con = new wConsequence().give();
+
+  var chapters = resources.elements;
+
+  chapters.forEach( function ( chapter )
+  {
+    chapter.elements.forEach( function ( lecture )
+    {
+      lecture.elements.forEach( function ( element )
+      {
+        if( element.content.typeName === 'lecture' )
+        {
+          var videoId = element.content.definition.videoId;
+          var name = element.name;
+
+          con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, "720p" ] ) )
+          .ifNoErrorThen( function ( url )
+          {
+            self.userData.downloadsList.push( { name : name, url : url } );
+          });
+        }
+      })
+    });
+
+  });
+
+  return con;
+}
+
+
+function getVideoUrl( videoId, resolution )
+{
+  var self = this;
+  var getUrl = _.strReplaceAll( self.config.getVideoApi,'{id}', videoId );
+
+  var con = new wConsequence();
+
+  self._request( getUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( "Failed to get resources list. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
+
+    if( err )
+    return con.error( err );
+
+    var data = JSON.parse( got.body );
+
+    data.sources.forEach( function( source )
+    {
+      if( source.resolution == resolution )
+      {
+        var url = source.formatSources[ "video/mp4" ];
+        return con.give( url );
+      }
+    })
+  });
+
+  return con;
 }
 
 // --
@@ -217,6 +302,10 @@ var Proto =
   _coursesListActParse : _coursesListActParse,
 
   _resourcesList : _resourcesList,
+  _getResourcesList : _getResourcesList,
+
+  makeDownloadsList : makeDownloadsList,
+  getVideoUrl : getVideoUrl,
 
   // relationships
 

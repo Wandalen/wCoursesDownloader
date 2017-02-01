@@ -87,6 +87,7 @@ function init( o )
   {
     self.userData = {};
     self.userData.resources = [];
+    self.userData.downloadsList = [];
   }
 
   if( !self._requestAct )
@@ -133,8 +134,12 @@ function _make()
 
   self._makePrepareHeadersForLogin();
 
+  self._make.completed = true;
+
   return new wConsequence().give();
 }
+
+_make.completed =  false;
 
 //
 
@@ -190,13 +195,15 @@ function _login()
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
     self.updateHeaders( 'Cookie', cookie );
-    self.userData.auth = 1;
+    _login.completed = true;
 
     return got;
   });
 
   return con;
 }
+
+_login.completed = false;
 
 // --
 // download
@@ -223,7 +230,7 @@ function _download( course )
 
   var con = new wConsequence().give();
 
-  if( !self.userData.auth )
+  if( !_login.completed )
   con = self._login();
 
   con.ifNoErrorThen( function()
@@ -236,6 +243,15 @@ function _download( course )
     course = courses[ 0 ];
 
     return self._resourcesList( course );
+  })
+  .ifNoErrorThen( function( resources )
+  {
+    return self.makeDownloadsList( resources );
+  })
+  .ifNoErrorThen( function( )
+  {
+    console.log( _.toStr( self.userData.downloadsList, { levels : 2 } ) );
+    return con.give();
   })
   .thenDo( function( err,got )
   {
@@ -265,11 +281,20 @@ function coursesList()
 
 //
 
+function _coursesListAct()
+{
+  var con = new wConsequence().give();
+  return con;
+}
+_coursesListAct.completed = false;
+
+//
+
 function _coursesList()
 {
   var self = this;
 
-  if( !self.userData.auth )
+  if( !_login.completed )
   return new wConsequence().error( _.err( 'User is not logged in, cant get courses list ' ) );
 
   return self._coursesListAct();
@@ -325,7 +350,7 @@ function _request( o )
   o = { url : o };
 
   logger.log( 'request' );
-  logger.log( _.toStr( o,{ levels : 1 } ) );
+  logger.log( _.toStr( o,{ levels : 5 } ) );
   logger.log();
 
   var callback = o.callback;
@@ -353,6 +378,33 @@ function _request( o )
 
   return con;
 }
+
+//
+
+function makeCompleted()
+{
+  var self = this;
+  return Boolean( self._make.completed );
+}
+
+//
+
+function loginCompleted()
+{
+  var self = this;
+  return Boolean( self._login.completed );
+}
+
+//
+
+function coursesListCompleted()
+{
+  var self = this;
+  return Boolean( self._coursesListAct.completed );
+}
+
+
+
 
 // --
 // class
@@ -432,12 +484,10 @@ var Proto =
 
   init : init,
 
-
   // download
 
   download : download,
   _download : _download,
-
 
   // make
 
@@ -446,20 +496,16 @@ var Proto =
   _makeAct : null,
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
-
   // login
 
   _login : _login,
   login : login,
 
-
-
   // courses
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _coursesListAct : null,
-
+  _coursesListAct : _coursesListAct,
 
   // resources
 
@@ -472,6 +518,13 @@ var Proto =
   updateHeaders : updateHeaders,
   _request : _request,
 
+  //flags
+
+  makeCompleted : makeCompleted,
+  loginCompleted : loginCompleted,
+  coursesListCompleted : coursesListCompleted,
+
+  makeDownloadsList : null,
 
   // relationships
 
