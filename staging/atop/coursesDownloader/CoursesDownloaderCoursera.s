@@ -39,21 +39,19 @@ function init( o )
 function _makeAct()
 {
   var self = this;
-  var con = new wConsequence();
 
   self.config.payload[ 'webrequest' ] =  true;
   self.config.options.json = true;
   self.config.options.body = self.config.payload;
 
-  return con.give();
 }
 
 //
 
-function _loginPrepareHeaders()
+function _makePrepareHeadersForLogin()
 {
   var self = this;
-  var con = Parent.prototype._loginPrepareHeaders.call( self );
+  var con = Parent.prototype._makePrepareHeadersForLogin.call( self );
 
   /* */
 
@@ -62,6 +60,7 @@ function _loginPrepareHeaders()
   var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
   var csrf2token = randomstring.generate( 24 )
   var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
+
   self.config.options.headers =
   {
     'Cookie' : cookies,
@@ -166,7 +165,7 @@ var Proto =
 
   _makeAct : _makeAct,
 
-  _loginPrepareHeaders : _loginPrepareHeaders,
+  _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
   _coursesListAct : _coursesListAct,
   _coursesListActParse : _coursesListActParse,

@@ -41,14 +41,15 @@ function _makeAct()
   var self = this;
 
   self.config.options.form = self.config.payload;
+
 }
 
 //
 
-function _loginPrepareHeaders()
+function _makePrepareHeadersForLogin()
 {
   var self = this;
-  var con = Parent.prototype._loginPrepareHeaders.call( self );
+  var con = Parent.prototype._makePrepareHeadersForLogin.call( self );
 
   function _getCSRF3( cookies )
   {
@@ -123,7 +124,7 @@ var Proto =
   init : init,
 
   _makeAct : _makeAct,
-  _loginPrepareHeaders : _loginPrepareHeaders,
+  _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
   _getUserCoursesAct : _getUserCoursesAct,
 
 

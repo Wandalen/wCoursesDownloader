@@ -93,38 +93,36 @@ function init( o )
 
 }
 
-//
+// --
+// download
+// --
 
-function Loader( className )
+function download()
 {
   var self = this;
 
-  if( className === undefined )
+  self.login()
+  .ifNoErrorThen( function()
   {
-    return self.Childs[ 'CoursesDownloaderCoursera' ]();
-  }
-  else
+    return self.getUserCourses();
+  })
+  .ifNoErrorThen( function()
   {
-    _.assert( self.Childs[ className ] );
-
-    return self.Childs[ className ]();
-  }
-
-}
-
-//
-
-function registerClass()
-{
-  _.assert( arguments.length > 0 );
-
-  for( var a = 0 ; a < arguments.length ; a++ )
+    return self.coursesList();
+  })
+  .ifNoErrorThen( function()
   {
-    var child = arguments[ a ];
-    this.Childs[ child.nameShort ] = child;
-  }
+    self._getMaterials( self.userData.courses[ 0 ] );
+  })
+  .thenDo( function( err,got )
+  {
+    if( err )
+    throw _.errLogOnce( err );
+  });
 
-  return this;
+  //need implement methods :
+  //getResourseLinkById, addResourcesToDownloadList, list can be : course name->chapters->resources with links,saveLinkToHardDrive
+
 }
 
 //
@@ -153,30 +151,22 @@ function _make()
     headers : null
   };
 
-  return self._makeAct()
-  .ifNoErrorThen( function()
-  {
-    return self._loginPrepareHeaders();
-  });
+  self._makeAct();
 
+  self._makePrepareHeadersForLogin();
+
+  return new wConsequence().give();
 }
 
 //
 
-function login()
+function _makePrepareHeadersForLogin()
 {
-  var self = this;
-
-  self._sync
-  .ifNoErrorThen( function()
-  {
-    return self._login();
-  });
-
-  return self;
 }
 
-//
+// --
+// login
+// --
 
 function _login()
 {
@@ -211,54 +201,22 @@ function _login()
 
 //
 
-function download()
+function login()
 {
   var self = this;
 
-  self.login()
+  self._sync
   .ifNoErrorThen( function()
   {
-    return self.getUserCourses();
-  })
-  .ifNoErrorThen( function()
-  {
-    return self.coursesList();
-  })
-  .ifNoErrorThen( function()
-  {
-    self._getMaterials( self.userData.courses[ 0 ] );
-  })
-  .thenDo( function( err,got )
-  {
-    if( err )
-    throw _.errLogOnce( err );
+    return self._login();
   });
 
-  //need implement methods :
-  //getResourseLinkById, addResourcesToDownloadList, list can be : course name->chapters->resources with links,saveLinkToHardDrive
-
+  return self;
 }
 
-//
-
-function updateHeaders( name, value )
-{
-  /* !!! what is it for? */
-  var self = this;
-  _.assert( _.strIs( name ) );
-  _.assert( _.strIs( value ) );
-  self.config.options.headers[ name ] = value;
-}
-
-//
-
-function _loginPrepareHeaders()
-{
-  var con = new wConsequence().give();
-  return con;
-}
-
-//
+// --
+// courses
+// --
 
 function coursesList()
 {
@@ -285,7 +243,9 @@ function _coursesList()
   return self._coursesListAct();
 }
 
-//
+// --
+// etc
+// --
 
 function _getMaterials( course )
 {
@@ -307,6 +267,17 @@ function _getMaterials( course )
 
     return data
   });
+}
+
+//
+
+function updateHeaders( name, value )
+{
+  /* !!! what is it for? */
+  var self = this;
+  _.assert( _.strIs( name ) );
+  _.assert( _.strIs( value ) );
+  self.config.options.headers[ name ] = value;
 }
 
 //
@@ -352,6 +323,42 @@ function _request( o )
 }
 
 // --
+// class
+// --
+
+function Loader( className )
+{
+  var self = this;
+
+  if( className === undefined )
+  {
+    return self.Classes[ 'CoursesDownloaderCoursera' ]();
+  }
+  else
+  {
+    _.assert( self.Classes[ className ] );
+
+    return self.Classes[ className ]();
+  }
+
+}
+
+//
+
+function registerClass()
+{
+  _.assert( arguments.length > 0 );
+
+  for( var a = 0 ; a < arguments.length ; a++ )
+  {
+    var child = arguments[ a ];
+    this.Classes[ child.nameShort ] = child;
+  }
+
+  return this;
+}
+
+// --
 // relationships
 // --
 
@@ -379,7 +386,7 @@ var Restricts =
 var Statics =
 {
   Request : require( 'request' ),
-  Childs : {},
+  Classes : {},
   registerClass : registerClass,
   Loader : Loader,
 }
@@ -393,28 +400,37 @@ var Proto =
 
   init : init,
 
+
+  // download
+
   download : download,
+
+
+  // make
 
   make : make,
   _make : _make,
   _makeAct : null,
+  _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
-  login : login,
+
+  // login
+
   _login : _login,
+  login : login,
+
+
+  // courses
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _getMaterials : _getMaterials,
-  updateHeaders : updateHeaders,
-  _loginPrepareHeaders : _loginPrepareHeaders,
-
-  //Act
-
   _coursesListAct : null,
 
 
-  //
+  // etc
 
+  _getMaterials : _getMaterials,
+  updateHeaders : updateHeaders,
   _request : _request,
 
 
