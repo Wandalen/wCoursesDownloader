@@ -94,7 +94,6 @@ function _getUserCoursesAct()
 
 var Composes =
 {
-  verbosity : 1,
 }
 
 var Aggregates =

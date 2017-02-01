@@ -76,17 +76,6 @@ function _loginPrepareHeaders()
 
 //
 
-function _parseCourses( body )
-{
-  var self = this;
-
-  var data = JSON.parse( body );
-
-  self.userData.courses = data.linked[ 'courses.v1' ];
-}
-
-//
-
 function _coursesListAct()
 {
   var self = this;
@@ -107,18 +96,21 @@ function _coursesListAct()
       if( err )
       throw _.errLogOnce( err );
 
-      self._parseCourses( got.body );
+      self._coursesListActParse( got.body );
 
       return got;
     });
   }
 
+  /* */
+
   con.ifNoErrorThen( function()
   {
+
     if( self.verbosity )
     {
-      var courses = _.toStr( self.userData.courses,{ json : 1 } );
-      logger.log( courses );
+      var log = _.toStr( self.userData.courses,{ json : 1 } );
+      logger.log( log );
     }
 
     con.give( self.userData.courses );
@@ -127,13 +119,23 @@ function _coursesListAct()
   return con;
 }
 
+//
+
+function _coursesListActParse( body )
+{
+  var self = this;
+
+  var data = JSON.parse( body );
+
+  self.userData.courses = data.linked[ 'courses.v1' ];
+}
+
 // --
 // relationships
 // --
 
 var Composes =
 {
-  verbosity : 1,
 }
 
 var Aggregates =
@@ -162,16 +164,12 @@ var Proto =
 
   init : init,
 
-  /* !!! where is make? */
-
   _makeAct : _makeAct,
+
   _loginPrepareHeaders : _loginPrepareHeaders,
 
-  /* !!! _getUserCoursesAct and _coursesListAct, why two methods for the same problem? */
-
-  _parseCourses : _parseCourses,
   _coursesListAct : _coursesListAct,
-
+  _coursesListActParse : _coursesListActParse,
 
   // relationships
 
