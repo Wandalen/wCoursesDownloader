@@ -131,7 +131,6 @@ function _coursesListAct()
 
 //
 
-
 function _resourcesList( course )
 {
   _.assert( _.objectIs( course ) );
@@ -212,13 +211,12 @@ var Proto =
   init : init,
 
   _makeAct : _makeAct,
-
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
   _coursesListAct : _coursesListAct,
-  _resourcesList : _resourcesList,
-
   _coursesListActParse : _coursesListActParse,
+
+  _resourcesList : _resourcesList,
 
   // relationships
 
