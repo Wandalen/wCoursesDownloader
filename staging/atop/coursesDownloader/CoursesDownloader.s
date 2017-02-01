@@ -151,7 +151,11 @@ function _make()
     headers : null
   };
 
-  return self._makeAct();
+  return self._makeAct()
+  .ifNoErrorThen( function()
+  {
+    return self._loginPrepareHeaders();
+  });
 }
 
 //
@@ -174,15 +178,15 @@ function login()
 function _login()
 {
   var self = this;
+  var con = new wConsequence().give();
 
   if( self.verbosity )
   logger.topicUp( 'Login ..' );
 
-  // if( !self.config.options )
-  // self._make();
+  if( !self.config.options )
+  con = self._make();
 
-  return self._loginPrepareHeaders()
-  .ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
+  con.ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
   .thenDo( function( err,got )
   {
 
@@ -197,7 +201,9 @@ function _login()
     self.userData.auth = 1;
 
     return got;
-  })
+  });
+
+  return con;
 }
 
 //
