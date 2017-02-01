@@ -86,10 +86,14 @@ function init( o )
   if( !self.userData )
   {
     self.userData = {};
+    self.userData.resources = [];
   }
 
   if( !self._requestAct )
   self._requestAct = self.Request.defaults({ jar : true });
+
+  if( !self._sync )
+  self._sync = new wConsequence().give();
 
 }
 
@@ -133,7 +137,11 @@ function make()
 {
   var self = this;
 
-  self._sync = self._make();
+  self._sync
+  .ifNoErrorThen( function()
+  {
+    return self._make();
+  });
 
   return self;
 }
@@ -189,12 +197,18 @@ function _login()
   con.ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
   .thenDo( function( err,got )
   {
+    if( err )
+    err = _.err( err );
+    // throw _.errLogOnce( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( "Login failed. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
 
     if( self.verbosity )
     logger.topicDown( 'Login ' + ( err ? 'error' : 'done' ) + '.' );
 
     if( err )
-    throw _.errLogOnce( err );
+    return con.error( err );
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
     self.updateHeaders( 'Cookie', cookie );
@@ -208,22 +222,40 @@ function _login()
 
 //
 
-function download()
+function download( course )
 {
   var self = this;
 
-  self.login()
+  self._sync
   .ifNoErrorThen( function()
   {
-    return self.getUserCourses();
+    return self._download( course );
   })
-  .ifNoErrorThen( function()
+
+  return self;
+}
+
+//
+
+function _download( course )
+{
+  var self = this;
+
+  var con = new wConsequence().give();
+
+  if( !self.userData.auth )
+  con = self._login();
+
+  con.ifNoErrorThen( function()
   {
-    return self.coursesList();
+    return self._coursesList();
   })
-  .ifNoErrorThen( function()
+  .ifNoErrorThen( function( courses )
   {
-    self._getMaterials( self.userData.courses[ 0 ] );
+    if( course === undefined )
+    course = courses[ 0 ];
+
+    return self._resourcesList( course );
   })
   .thenDo( function( err,got )
   {
@@ -284,26 +316,24 @@ function _coursesList()
 
 //
 
-function _getMaterials( course )
+function resourcesList( course )
 {
-  _.assert( _.objectIs( course ) );
   var self = this;
 
-  logger.log( 'Trying to get matetials for : ', course.name );
-
-  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
-
-  return self._request( postUrl )
-  .thenDo( function( err, got )
+  self._sync
+  .ifNoErrorThen( function()
   {
-    if( err )
-    throw _.errLogOnce( err );
+    return self._resourcesList( course );
+  })
 
-    var data = JSON.parse( got.body );
-    logger.log( data.courseMaterial );
+}
 
-    return data
-  });
+//
+
+function _resourcesList( course )
+{
+  var con = new wConsequence().give();
+  return con;
 }
 
 //
@@ -391,6 +421,7 @@ var Proto =
   init : init,
 
   download : download,
+  _download : _download,
 
   make : make,
   _make : _make,
@@ -400,7 +431,10 @@ var Proto =
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _getMaterials : _getMaterials,
+
+  resourcesList : resourcesList,
+  _resourcesList : _resourcesList,
+
   updateHeaders : updateHeaders,
   _loginPrepareHeaders : _loginPrepareHeaders,
 

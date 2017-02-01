@@ -128,6 +128,52 @@ function _coursesListAct()
   return con;
 }
 
+//
+
+function _resourcesList( course )
+{
+  _.assert( _.objectIs( course ) );
+  var self = this;
+
+  var con = Parent.prototype._loginPrepareHeaders.call( self );
+
+  logger.log( 'Trying to get resources for : ', course.name );
+
+  if( self.userData.resources[ course.name ] )
+  {
+    if( self.verbosity )
+    logger.log( "Resources:\n", _.toStr( self.userData.resources[ course.name ], { json : 1 } ) );
+
+    return con.give( self.userData.resources[ course.name ] );
+  }
+
+  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
+
+  return self._request( postUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( "Failed to get resources list. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
+
+    if( err )
+    return con.error( err );
+
+    var data = JSON.parse( got.body );
+
+    self.userData.resources[ course.name ] = data.courseMaterial;
+
+    if( self.verbosity )
+    logger.log( "Resources:\n", _.toStr( data.courseMaterial, { json : 1 } ) );
+
+    con.give( self.userData.resources[ course.name ] );
+  });
+
+  return con;
+}
+
 // --
 // relationships
 // --
@@ -172,6 +218,7 @@ var Proto =
 
   _parseCourses : _parseCourses,
   _coursesListAct : _coursesListAct,
+  _resourcesList : _resourcesList,
 
 
   // relationships
