@@ -36,7 +36,7 @@ function init( o )
 
 //
 
-function _loginAct()
+function _makeAct()
 {
   var self = this;
 
@@ -45,8 +45,10 @@ function _loginAct()
 
 //
 
-function _prepareHeadersAct()
+function _loginPrepareHeaders()
 {
+  Parent.prototype._loginPrepareHeaders.call( self );
+
   var self = this;
   var con = new wConsequence();
 
@@ -123,8 +125,8 @@ var Proto =
 
   init : init,
 
-  _loginAct : _loginAct,
-  _prepareHeadersAct : _prepareHeadersAct,
+  _makeAct : _makeAct,
+  _loginPrepareHeaders : _loginPrepareHeaders,
   _getUserCoursesAct : _getUserCoursesAct,
 
 

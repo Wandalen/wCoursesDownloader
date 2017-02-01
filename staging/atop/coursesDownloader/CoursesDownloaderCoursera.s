@@ -36,20 +36,25 @@ function init( o )
 
 //
 
-function _loginAct()
+function _makeAct()
 {
   var self = this;
+  var con = new wConsequence();
 
   self.config.payload[ 'webrequest' ] =  true;
   self.config.options.json = true;
   self.config.options.body = self.config.payload;
+  con.give();
 
+  return con;
 }
 
 //
 
-function _prepareHeadersAct()
+function _loginPrepareHeaders()
 {
+  Parent.prototype._loginPrepareHeaders.call( self );
+
   var self = this;
   var con = new wConsequence();
 
@@ -76,27 +81,13 @@ function _prepareHeadersAct()
 
 //
 
-function _getUserCoursesAct()
+function _parseCourses( body )
 {
   var self = this;
 
-  logger.log( 'Trying to get courses list.' );
+  var data = JSON.parse( body );
 
-  return self._request
-  ({
-    url : self.config.getUserCoursesUrl,
-    headers : self.config.options.headers
-  })
-  .thenDo( function( err, got )
-  {
-    if( err )
-    throw _.errLogOnce( err );
-
-    self.userData.courses = got.body;
-
-    return got;
-  });
-
+  self.userData.courses = data.linked[ 'courses.v1' ];
 }
 
 //
@@ -104,20 +95,39 @@ function _getUserCoursesAct()
 function _coursesListAct()
 {
   var self = this;
-  var con = new wConsequence();
+  var con = new wConsequence().give();
 
-  var data = JSON.parse( self.userData.courses );
-
-  self.userData.courses = data.linked[ 'courses.v1' ];
-  logger.log( 'Courses list : \n' );
-
-  self.userData.courses.forEach( function( element )
+  if( !self.userData.courses )
   {
-    logger.log( 'element',element );
-    logger.log( 'name : ', element.name, ' class_name : ', element.slug, '\n' );
-  });
+    if( self.verbosity )
+    logger.log( 'Trying to get courses list.' );
 
-  con.give();
+    con = self._request
+    ({
+      url : self.config.getUserCoursesUrl,
+      headers : self.config.options.headers
+    })
+    .thenDo( function( err, got )
+    {
+      if( err )
+      throw _.errLogOnce( err );
+
+      self._parseCourses( got.body );
+
+      return got;
+    });
+  }
+
+  con.ifNoErrorThen( function()
+  {
+    if( self.verbosity )
+    {
+      var courses = _.toStr( self.userData.courses,{ json : 1 } );
+      logger.log( courses );
+    }
+
+    con.give( self.userData.courses );
+  });
 
   return con;
 }
@@ -159,12 +169,12 @@ var Proto =
 
   /* !!! where is make? */
 
-  _loginAct : _loginAct,
-  _prepareHeadersAct : _prepareHeadersAct,
+  _makeAct : _makeAct,
+  _loginPrepareHeaders : _loginPrepareHeaders,
 
   /* !!! _getUserCoursesAct and _coursesListAct, why two methods for the same problem? */
 
-  _getUserCoursesAct : _getUserCoursesAct,
+  _parseCourses : _parseCourses,
   _coursesListAct : _coursesListAct,
 
 
