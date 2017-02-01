@@ -97,41 +97,9 @@ function init( o )
 
 }
 
-//
-
-function Loader( className )
-{
-  var self = this;
-
-  if( className === undefined )
-  {
-    return self.Childs[ 'CoursesDownloaderCoursera' ]();
-  }
-  else
-  {
-    _.assert( self.Childs[ className ] );
-
-    return self.Childs[ className ]();
-  }
-
-}
-
-//
-
-function registerClass()
-{
-  _.assert( arguments.length > 0 );
-
-  for( var a = 0 ; a < arguments.length ; a++ )
-  {
-    var child = arguments[ a ];
-    this.Childs[ child.nameShort ] = child;
-  }
-
-  return this;
-}
-
-//
+// --
+// make
+// --
 
 function make()
 {
@@ -146,6 +114,8 @@ function make()
   return self;
 }
 
+//
+
 function _make()
 {
   var self = this;
@@ -159,14 +129,22 @@ function _make()
     headers : null
   };
 
-  return self._makeAct()
-  .ifNoErrorThen( function()
-  {
-    return self._loginPrepareHeaders();
-  });
+  self._makeAct();
+
+  self._makePrepareHeadersForLogin();
+
+  return new wConsequence().give();
 }
 
 //
+
+function _makePrepareHeadersForLogin()
+{
+}
+
+// --
+// login
+// --
 
 function login()
 {
@@ -220,7 +198,9 @@ function _login()
   return con;
 }
 
-//
+// --
+// download
+// --
 
 function download( course )
 {
@@ -263,31 +243,12 @@ function _download( course )
     throw _.errLogOnce( err );
   });
 
-  //need implement methods :
-  //getResourseLinkById, addResourcesToDownloadList, list can be : course name->chapters->resources with links,saveLinkToHardDrive
-
+  return self;
 }
 
-//
-
-function updateHeaders( name, value )
-{
-  /* !!! what is it for? */
-  var self = this;
-  _.assert( _.strIs( name ) );
-  _.assert( _.strIs( value ) );
-  self.config.options.headers[ name ] = value;
-}
-
-//
-
-function _loginPrepareHeaders()
-{
-  var con = new wConsequence().give();
-  return con;
-}
-
-//
+// --
+// courses
+// --
 
 function coursesList()
 {
@@ -314,7 +275,9 @@ function _coursesList()
   return self._coursesListAct();
 }
 
-//
+// --
+// etc
+// --
 
 function resourcesList( course )
 {
@@ -334,6 +297,17 @@ function _resourcesList( course )
 {
   var con = new wConsequence().give();
   return con;
+}
+
+//
+
+function updateHeaders( name, value )
+{
+  /* !!! what is it for? */
+  var self = this;
+  _.assert( _.strIs( name ) );
+  _.assert( _.strIs( value ) );
+  self.config.options.headers[ name ] = value;
 }
 
 //
@@ -379,6 +353,42 @@ function _request( o )
 }
 
 // --
+// class
+// --
+
+function Loader( className )
+{
+  var self = this;
+
+  if( className === undefined )
+  {
+    return self.Classes[ 'CoursesDownloaderCoursera' ]();
+  }
+  else
+  {
+    _.assert( self.Classes[ className ] );
+
+    return self.Classes[ className ]();
+  }
+
+}
+
+//
+
+function registerClass()
+{
+  _.assert( arguments.length > 0 );
+
+  for( var a = 0 ; a < arguments.length ; a++ )
+  {
+    var child = arguments[ a ];
+    this.Classes[ child.nameShort ] = child;
+  }
+
+  return this;
+}
+
+// --
 // relationships
 // --
 
@@ -406,7 +416,7 @@ var Restricts =
 var Statics =
 {
   Request : require( 'request' ),
-  Childs : {},
+  Classes : {},
   registerClass : registerClass,
   Loader : Loader,
 }
@@ -420,31 +430,40 @@ var Proto =
 
   init : init,
 
+
+  // download
+
   download : download,
   _download : _download,
 
+
+  // make
+
   make : make,
   _make : _make,
+  _makeAct : null,
+  _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
-  login : login,
+
+  // login
+
   _login : _login,
+  login : login,
+
+
+
+  // courses
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-
-  resourcesList : resourcesList,
-  _resourcesList : _resourcesList,
-
-  updateHeaders : updateHeaders,
-  _loginPrepareHeaders : _loginPrepareHeaders,
-
-  //Act
-
   _coursesListAct : null,
 
 
-  //
+  // etc
 
+  resourcesList : resourcesList,
+  _resourcesList : _resourcesList,
+  updateHeaders : updateHeaders,
   _request : _request,
 
 

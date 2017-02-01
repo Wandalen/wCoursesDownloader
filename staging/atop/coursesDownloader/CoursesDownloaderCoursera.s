@@ -39,22 +39,19 @@ function init( o )
 function _makeAct()
 {
   var self = this;
-  var con = new wConsequence();
 
   self.config.payload[ 'webrequest' ] =  true;
   self.config.options.json = true;
   self.config.options.body = self.config.payload;
-  con.give();
 
-  return con;
 }
 
 //
 
-function _loginPrepareHeaders()
+function _makePrepareHeadersForLogin()
 {
   var self = this;
-  var con = Parent.prototype._loginPrepareHeaders.call( self );
+  var con = Parent.prototype._makePrepareHeadersForLogin.call( self );
 
   /* */
 
@@ -63,6 +60,7 @@ function _loginPrepareHeaders()
   var csrf2cookie = 'csrf2_token_' + randomstring.generate( 8 );
   var csrf2token = randomstring.generate( 24 )
   var cookies = `csrftoken=${csrftoken}; csrf2cookie=${csrf2cookie}; csrf2token=${csrf2token};`
+
   self.config.options.headers =
   {
     'Cookie' : cookies,
@@ -77,7 +75,7 @@ function _loginPrepareHeaders()
 
 //
 
-function _parseCourses( body )
+function _coursesListActParse( body )
 {
   var self = this;
 
@@ -108,18 +106,21 @@ function _coursesListAct()
       if( err )
       throw _.errLogOnce( err );
 
-      self._parseCourses( got.body );
+      self._coursesListActParse( got.body );
 
       return got;
     });
   }
 
+  /* */
+
   con.ifNoErrorThen( function()
   {
+
     if( self.verbosity )
     {
-      var courses = _.toStr( self.userData.courses,{ json : 1 } );
-      logger.log( courses );
+      var log = _.toStr( self.userData.courses,{ json : 1 } );
+      logger.log( log );
     }
 
     con.give( self.userData.courses );
@@ -130,12 +131,13 @@ function _coursesListAct()
 
 //
 
+
 function _resourcesList( course )
 {
   _.assert( _.objectIs( course ) );
   var self = this;
 
-  var con = Parent.prototype._loginPrepareHeaders.call( self );
+  var con = new wConsequence().give();
 
   logger.log( 'Trying to get resources for : ', course.name );
 
@@ -172,6 +174,7 @@ function _resourcesList( course )
   });
 
   return con;
+
 }
 
 // --
@@ -180,7 +183,6 @@ function _resourcesList( course )
 
 var Composes =
 {
-  verbosity : 1,
 }
 
 var Aggregates =
@@ -209,17 +211,14 @@ var Proto =
 
   init : init,
 
-  /* !!! where is make? */
-
   _makeAct : _makeAct,
-  _loginPrepareHeaders : _loginPrepareHeaders,
 
-  /* !!! _getUserCoursesAct and _coursesListAct, why two methods for the same problem? */
+  _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
-  _parseCourses : _parseCourses,
   _coursesListAct : _coursesListAct,
   _resourcesList : _resourcesList,
 
+  _coursesListActParse : _coursesListActParse,
 
   // relationships
 
