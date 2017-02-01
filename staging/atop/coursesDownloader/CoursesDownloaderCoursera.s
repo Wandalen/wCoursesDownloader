@@ -135,23 +135,33 @@ function _coursesListAct()
 function _resourcesList( course )
 {
   _.assert( _.objectIs( course ) );
+
   var self = this;
 
-  var con = new wConsequence().give();
+  return self._getResourcesList( course )
+  .ifNoErrorThen( function( resources )
+  {
+    if( self.verbosity )
+    logger.log( "Resources:\n", _.toStr( resources, { levels : 3 } ) );
+  });
+}
+
+//
+
+function _getResourcesList( course )
+{
+  var self = this;
+
+  var con = new wConsequence();
 
   logger.log( 'Trying to get resources for : ', course.name );
 
   if( self.userData.resources[ course.name ] )
-  {
-    if( self.verbosity )
-    logger.log( "Resources:\n", _.toStr( self.userData.resources[ course.name ], { json : 1 } ) );
-
-    return con.give( self.userData.resources[ course.name ] );
-  }
+  return con.give( self.userData.resources[ course.name ] );
 
   var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
 
-  return self._request( postUrl )
+  self._request( postUrl )
   .thenDo( function( err, got )
   {
     if( err )
@@ -167,14 +177,10 @@ function _resourcesList( course )
 
     self.userData.resources[ course.name ] = data.courseMaterial;
 
-    if( self.verbosity )
-    logger.log( "Resources:\n", _.toStr( data.courseMaterial, { json : 1 } ) );
-
     con.give( self.userData.resources[ course.name ] );
   });
 
   return con;
-
 }
 
 // --
@@ -218,6 +224,7 @@ var Proto =
   _coursesListActParse : _coursesListActParse,
 
   _resourcesList : _resourcesList,
+  _getResourcesList : _getResourcesList,
 
   // relationships
 
