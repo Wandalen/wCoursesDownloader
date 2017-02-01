@@ -87,6 +87,7 @@ function init( o )
   {
     self.userData = {};
     self.userData.resources = [];
+    self.userData.downloadsList = [];
   }
 
   if( !self._requestAct )
@@ -243,6 +244,15 @@ function _download( course )
 
     return self._resourcesList( course );
   })
+  .ifNoErrorThen( function( resources )
+  {
+    return self.makeDownloadsList( resources );
+  })
+  .ifNoErrorThen( function( )
+  {
+    console.log( _.toStr( self.userData.downloadsList, { levels : 2 } ) );
+    return con.give();
+  })
   .thenDo( function( err,got )
   {
     if( err )
@@ -340,7 +350,7 @@ function _request( o )
   o = { url : o };
 
   logger.log( 'request' );
-  logger.log( _.toStr( o,{ levels : 1 } ) );
+  logger.log( _.toStr( o,{ levels : 5 } ) );
   logger.log();
 
   var callback = o.callback;
@@ -513,6 +523,8 @@ var Proto =
   makeCompleted : makeCompleted,
   loginCompleted : loginCompleted,
   coursesListCompleted : coursesListCompleted,
+
+  makeDownloadsList : null,
 
   // relationships
 

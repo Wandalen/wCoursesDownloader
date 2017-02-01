@@ -6,6 +6,8 @@
 
 if( typeof module !== 'undefined' )
 {
+  // require( 'wFiles' )
+
 }
 
 // constructor
@@ -138,12 +140,19 @@ function _resourcesList( course )
 
   var self = this;
 
-  return self._getResourcesList( course )
-  .ifNoErrorThen( function( resources )
+  var con = self._getResourcesList( course );
+
+  if( self.verbosity )
   {
-    if( self.verbosity )
-    logger.log( "Resources:\n", _.toStr( resources, { levels : 3 } ) );
-  });
+    con.ifNoErrorThen( function( resources )
+    {
+      logger.log( "Resources:\n", _.toStr( resources, { levels : 3 } ) );
+
+      con.give( resources );
+    });
+  }
+
+  return con;
 }
 
 //
@@ -178,6 +187,75 @@ function _getResourcesList( course )
     self.userData.resources[ course.name ] = data.courseMaterial;
 
     con.give( self.userData.resources[ course.name ] );
+  });
+
+  return con;
+}
+
+//
+
+function makeDownloadsList( resources )
+{
+  var self = this;
+  var con = new wConsequence().give();
+
+  var chapters = resources.elements;
+
+  chapters.forEach( function ( chapter )
+  {
+    chapter.elements.forEach( function ( lecture )
+    {
+      lecture.elements.forEach( function ( element )
+      {
+        if( element.content.typeName === 'lecture' )
+        {
+          var videoId = element.content.definition.videoId;
+          var name = element.name;
+
+          con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, "720p" ] ) )
+          .ifNoErrorThen( function ( url )
+          {
+            self.userData.downloadsList.push( { name : name, url : url } );
+          });
+        }
+      })
+    });
+
+  });
+
+  return con;
+}
+
+
+function getVideoUrl( videoId, resolution )
+{
+  var self = this;
+  var getUrl = _.strReplaceAll( self.config.getVideoApi,'{id}', videoId );
+
+  var con = new wConsequence();
+
+  self._request( getUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( "Failed to get resources list. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
+
+    if( err )
+    return con.error( err );
+
+    var data = JSON.parse( got.body );
+
+    data.sources.forEach( function( source )
+    {
+      if( source.resolution == resolution )
+      {
+        var url = source.formatSources[ "video/mp4" ];
+        return con.give( url );
+      }
+    })
   });
 
   return con;
@@ -225,6 +303,9 @@ var Proto =
 
   _resourcesList : _resourcesList,
   _getResourcesList : _getResourcesList,
+
+  makeDownloadsList : makeDownloadsList,
+  getVideoUrl : getVideoUrl,
 
   // relationships
 
