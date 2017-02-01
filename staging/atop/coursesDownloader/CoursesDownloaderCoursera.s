@@ -89,7 +89,7 @@ function _coursesListActParse( body )
 function _coursesListAct()
 {
   var self = this;
-  var con = new wConsequence().give();
+  var con = Parent.prototype._coursesListAct.call( self );
 
   if( !self.userData.courses )
   {
@@ -124,6 +124,7 @@ function _coursesListAct()
     }
 
     con.give( self.userData.courses );
+    self._coursesListAct.completed = true;
   });
 
   return con;

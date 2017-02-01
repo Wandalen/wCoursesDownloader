@@ -133,8 +133,12 @@ function _make()
 
   self._makePrepareHeadersForLogin();
 
+  self._make.completed = true;
+
   return new wConsequence().give();
 }
+
+_make.completed =  false;
 
 //
 
@@ -190,13 +194,15 @@ function _login()
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
     self.updateHeaders( 'Cookie', cookie );
-    self.userData.auth = 1;
+    _login.completed = true;
 
     return got;
   });
 
   return con;
 }
+
+_login.completed = false;
 
 // --
 // download
@@ -223,7 +229,7 @@ function _download( course )
 
   var con = new wConsequence().give();
 
-  if( !self.userData.auth )
+  if( !_login.completed )
   con = self._login();
 
   con.ifNoErrorThen( function()
@@ -265,11 +271,20 @@ function coursesList()
 
 //
 
+function _coursesListAct()
+{
+  var con = new wConsequence().give();
+  return con;
+}
+_coursesListAct.completed = false;
+
+//
+
 function _coursesList()
 {
   var self = this;
 
-  if( !self.userData.auth )
+  if( !_login.completed )
   return new wConsequence().error( _.err( 'User is not logged in, cant get courses list ' ) );
 
   return self._coursesListAct();
@@ -352,6 +367,33 @@ function _request( o )
   return con;
 }
 
+//
+
+function makeCompleted()
+{
+  var self = this;
+  return Boolean( self._make.completed );
+}
+
+//
+
+function loginCompleted()
+{
+  var self = this;
+  return Boolean( self._login.completed );
+}
+
+//
+
+function coursesListCompleted()
+{
+  var self = this;
+  return Boolean( self._coursesListAct.completed );
+}
+
+
+
+
 // --
 // class
 // --
@@ -430,12 +472,10 @@ var Proto =
 
   init : init,
 
-
   // download
 
   download : download,
   _download : _download,
-
 
   // make
 
@@ -444,20 +484,16 @@ var Proto =
   _makeAct : null,
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
-
   // login
 
   _login : _login,
   login : login,
 
-
-
   // courses
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _coursesListAct : null,
-
+  _coursesListAct : _coursesListAct,
 
   // etc
 
@@ -466,6 +502,11 @@ var Proto =
   updateHeaders : updateHeaders,
   _request : _request,
 
+  //flags
+
+  makeCompleted : makeCompleted,
+  loginCompleted : loginCompleted,
+  coursesListCompleted : coursesListCompleted,
 
   // relationships
 
