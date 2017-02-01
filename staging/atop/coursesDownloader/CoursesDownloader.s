@@ -257,7 +257,7 @@ function coursesList()
   self._sync
   .ifNoErrorThen( function()
   {
-    self._sync = self._coursesListAct();
+    self._sync = self._coursesList();
   });
 
   return self;
@@ -270,7 +270,7 @@ function _coursesList()
   var self = this;
 
   if( !self.userData.auth )
-  return;
+  return new wConsequence().error( _.err( 'User is not logged in, cant get courses list ' ) );
 
   return self._coursesListAct();
 }
