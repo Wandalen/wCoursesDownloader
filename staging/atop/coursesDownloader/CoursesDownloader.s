@@ -163,7 +163,7 @@ function login()
   self._sync
   .ifNoErrorThen( function()
   {
-    self._sync = self._login();
+    return self._login();
   });
 
   return self;
@@ -258,7 +258,7 @@ function coursesList()
   self._sync
   .ifNoErrorThen( function()
   {
-    self._sync = self._coursesList();
+    return self._coursesList();
   });
 
   return self;
