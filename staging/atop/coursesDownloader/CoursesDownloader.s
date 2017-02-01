@@ -245,7 +245,8 @@ function updateHeaders( name, value )
 
 function _loginPrepareHeaders()
 {
-
+  var con = new wConsequence().give();
+  return con;
 }
 
 //
@@ -312,7 +313,7 @@ function _request( o )
   o = { url : o };
 
   logger.log( 'request' );
-  logger.log( o );
+  logger.log( _.toStr( o,{ levels : 1 } ) );
   logger.log();
 
   var callback = o.callback;

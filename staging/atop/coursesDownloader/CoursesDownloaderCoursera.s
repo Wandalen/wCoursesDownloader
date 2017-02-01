@@ -53,10 +53,8 @@ function _makeAct()
 
 function _loginPrepareHeaders()
 {
-  Parent.prototype._loginPrepareHeaders.call( self );
-
   var self = this;
-  var con = new wConsequence();
+  var con = Parent.prototype._loginPrepareHeaders.call( self );
 
   /* */
 
@@ -73,8 +71,6 @@ function _loginPrepareHeaders()
     'X-CSRF2-Token' : csrf2token,
     'Connection' : 'keep-alive'
   }
-
-  con.give();
 
   return con;
 }

@@ -47,10 +47,8 @@ function _makeAct()
 
 function _loginPrepareHeaders()
 {
-  Parent.prototype._loginPrepareHeaders.call( self );
-
   var self = this;
-  var con = new wConsequence();
+  var con = Parent.prototype._loginPrepareHeaders.call( self );
 
   function _getCSRF3( cookies )
   {
@@ -69,8 +67,8 @@ function _loginPrepareHeaders()
     con.give();
   }
 
-  return self._request( self.config.loginPageUrl )
-  .thenDo( function( err, got )
+  con.ifNoErrorThen( _.routineJoin( self,self._request,[ self.config.loginPageUrl ] ) )
+  .got( function( err, got )
   {
     if( err )
     throw _.errLog( err );
