@@ -44,9 +44,8 @@ function _makeAct()
   self.config.payload[ 'webrequest' ] =  true;
   self.config.options.json = true;
   self.config.options.body = self.config.payload;
-  con.give();
 
-  return con;
+  return con.give();
 }
 
 //

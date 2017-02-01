@@ -138,6 +138,8 @@ function make()
   return self;
 }
 
+//
+
 function _make()
 {
   var self = this;
