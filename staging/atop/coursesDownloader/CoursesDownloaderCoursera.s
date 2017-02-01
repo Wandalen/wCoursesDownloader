@@ -77,17 +77,6 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _coursesListActParse( body )
-{
-  var self = this;
-
-  var data = JSON.parse( body );
-
-  self.userData.courses = data.linked[ 'courses.v1' ];
-}
-
-//
-
 function _coursesListAct()
 {
   var self = this;
@@ -110,7 +99,6 @@ function _coursesListAct()
 
       self._coursesListActParse( got.body );
 
-      return got;
     });
   }
 
@@ -134,34 +122,23 @@ function _coursesListAct()
 
 //
 
-function _resourcesList( course )
+function _coursesListActParse( body )
 {
-  _.assert( _.objectIs( course ) );
-
   var self = this;
 
-  var con = self._getResourcesList( course );
+  var data = JSON.parse( body );
 
-  if( self.verbosity )
-  {
-    con.ifNoErrorThen( function( resources )
-    {
-      logger.log( "Resources:\n", _.toStr( resources, { levels : 3 } ) );
-
-      con.give( resources );
-    });
-  }
-
-  return con;
+  self.userData.courses = data.linked[ 'courses.v1' ];
 }
 
 //
 
-function _getResourcesList( course )
+function _resourcesList( course )
 {
   var self = this;
-
   var con = new wConsequence();
+
+  _.assert( _.objectIs( course ) );
 
   logger.log( 'Trying to get resources for : ', course.name );
 
@@ -170,17 +147,18 @@ function _getResourcesList( course )
 
   var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
 
+  /* */
+
   self._request( postUrl )
   .thenDo( function( err, got )
   {
-    if( err )
-    err = _.err( err );
 
+    if( !err )
     if( got.response.statusCode !== 200 )
-    err = _.err( "Failed to get resources list. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
+    err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
 
     if( err )
-    return con.error( err );
+    return con.error( _.err( err ) );
 
     var data = JSON.parse( got.body );
 
@@ -188,6 +166,18 @@ function _getResourcesList( course )
 
     con.give( self.userData.resources[ course.name ] );
   });
+
+  /* */
+
+  if( self.verbosity )
+  {
+    con.ifNoErrorThen( function( resources )
+    {
+      logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
+
+      con.give( resources );
+    });
+  }
 
   return con;
 }
@@ -212,7 +202,7 @@ function makeDownloadsList( resources )
           var videoId = element.content.definition.videoId;
           var name = element.name;
 
-          con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, "720p" ] ) )
+          con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
           .ifNoErrorThen( function ( url )
           {
             self.userData.downloadsList.push( { name : name, url : url } );
@@ -226,6 +216,7 @@ function makeDownloadsList( resources )
   return con;
 }
 
+//
 
 function getVideoUrl( videoId, resolution )
 {
@@ -241,7 +232,7 @@ function getVideoUrl( videoId, resolution )
     err = _.err( err );
 
     if( got.response.statusCode !== 200 )
-    err = _.err( "Failed to get resources list. StatusCode: ", got.response.statusCode, "Server response: ", got.body );
+    err = _.err( 'Failed to get resources list. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
 
     if( err )
     return con.error( err );
@@ -252,10 +243,11 @@ function getVideoUrl( videoId, resolution )
     {
       if( source.resolution == resolution )
       {
-        var url = source.formatSources[ "video/mp4" ];
+        var url = source.formatSources[ 'video/mp4' ];
         return con.give( url );
       }
     })
+
   });
 
   return con;
@@ -275,7 +267,6 @@ var Aggregates =
 
 var Associates =
 {
-  _requestAct : null,
 }
 
 var Restricts =
@@ -302,7 +293,6 @@ var Proto =
   _coursesListActParse : _coursesListActParse,
 
   _resourcesList : _resourcesList,
-  _getResourcesList : _getResourcesList,
 
   makeDownloadsList : makeDownloadsList,
   getVideoUrl : getVideoUrl,

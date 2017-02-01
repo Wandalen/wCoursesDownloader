@@ -103,7 +103,6 @@ var Aggregates =
 
 var Associates =
 {
-  _requestAct : null,
 }
 
 var Restricts =

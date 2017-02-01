@@ -67,7 +67,7 @@ function init( o )
 
   _.instanceInit( self );
 
-  if( self.Self === Self )
+  // if( self.Self === Self )
   Object.preventExtensions( self );
 
   if( o )
@@ -351,7 +351,6 @@ function _request( o )
 
   logger.log( 'request' );
   logger.log( _.toStr( o,{ levels : 5 } ) );
-  logger.log();
 
   var callback = o.callback;
   if( callback )
@@ -465,6 +464,7 @@ var Associates =
 
 var Restricts =
 {
+  _sync : null,
 }
 
 var Statics =
@@ -518,6 +518,7 @@ var Proto =
   updateHeaders : updateHeaders,
   _request : _request,
 
+
   //flags
 
   makeCompleted : makeCompleted,
@@ -525,6 +526,7 @@ var Proto =
   coursesListCompleted : coursesListCompleted,
 
   makeDownloadsList : null,
+
 
   // relationships
 
