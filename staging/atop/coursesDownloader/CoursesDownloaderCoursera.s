@@ -82,7 +82,7 @@ function _coursesListAct()
   var self = this;
   var con = Parent.prototype._coursesListAct.call( self );
 
-  if( !self.userData.courses )
+  if( !self.coursesListCompleted() )
   {
     if( self.verbosity )
     logger.log( 'Trying to get courses list.' );
@@ -98,7 +98,7 @@ function _coursesListAct()
       throw _.errLogOnce( err );
 
       self._coursesListActParse( got.body );
-
+      self._coursesListCompleted = true;
     });
   }
 
@@ -109,12 +109,11 @@ function _coursesListAct()
 
     if( self.verbosity )
     {
-      var log = _.toStr( self.userData.courses,{ json : 1 } );
+      var log = _.toStr( self.courses,{ json : 1 } );
       logger.log( log );
     }
 
-    con.give( self.userData.courses );
-    self._coursesListAct.completed = true;
+    con.give( self.courses );
   });
 
   return con;
@@ -128,7 +127,7 @@ function _coursesListActParse( body )
 
   var data = JSON.parse( body );
 
-  self.userData.courses = data.linked[ 'courses.v1' ];
+  self.courses = data.linked[ 'courses.v1' ];
 }
 
 //
@@ -142,8 +141,8 @@ function _resourcesList( course )
 
   logger.log( 'Trying to get resources for : ', course.name );
 
-  if( self.userData.resources[ course.name ] )
-  return con.give( self.userData.resources[ course.name ] );
+  if( self.resources[ course.name ] )
+  return con.give( self.resources[ course.name ] );
 
   var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
 
@@ -162,9 +161,9 @@ function _resourcesList( course )
 
     var data = JSON.parse( got.body );
 
-    self.userData.resources[ course.name ] = data.courseMaterial;
+    self.resources[ course.name ] = data.courseMaterial;
 
-    con.give( self.userData.resources[ course.name ] );
+    con.give( self.resources[ course.name ] );
   });
 
   /* */
@@ -205,7 +204,7 @@ function makeDownloadsList( resources )
           con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
           .ifNoErrorThen( function ( url )
           {
-            self.userData.downloadsList.push( { name : name, url : url } );
+            self.downloadsList.push( { name : name, url : url } );
           });
         }
       })
