@@ -75,13 +75,15 @@ function init( o )
 
   if( !self.config )
   {
-    var config = require('./config.js');
+    var config = require( './config.js' );
 
-    if( self.siteName  )
-    self.config = config[ self.siteName ];
-    else
-    self.config = config[ config.default ];
+    if( !self.currentPlatform  )
+    self.currentPlatform = config.defaultPlatform;
+
+    self.config = config[ self.currentPlatform ];
   }
+
+  _.assert( self.currentPlatform );
 
   if( !self._requestAct )
   self._requestAct = self.Request.defaults({ jar : true });
@@ -89,6 +91,91 @@ function init( o )
   if( !self._sync )
   self._sync = new wConsequence().give();
 
+}
+
+// --
+// download
+// --
+
+function download()
+{
+  var self = this;
+
+  _.assert( arguments.length === 0 );
+
+  self._sync
+  .ifNoErrorThen( function()
+  {
+    return self._download();
+  })
+
+  return self;
+}
+
+//
+
+function _download()
+{
+  var self = this;
+  var con = new wConsequence().give();
+
+  _.assert( arguments.length === 0 );
+
+  // if( self.verbosity )
+  // logger.topicUp( 'Downloading course',self.currentCourse,'..' );
+
+  /* login */
+
+  con.seal( self )
+  .ifNoErrorThen( self._make )
+  .ifNoErrorThen( self._login )
+  .ifNoErrorThen( self._coursesList )
+  .ifNoErrorThen( self._coursesPick,[ 0 ] )
+  .ifNoErrorThen( self._resourcesList )
+  ;
+
+  // con.ifNoErrorThen( function()
+  // {
+  //   return self._login();
+  // })
+  // con.ifNoErrorThen( function()
+  // {
+  //   return self._coursesList();
+  // })
+  // .ifNoErrorThen( function( courses )
+  // {
+  //   if( course === undefined )
+  //   course = courses[ 0 ];
+  //   return self._resourcesList( course );
+  // })
+  // .ifNoErrorThen( function( resources )
+  // {
+  //   return self.makeDownloadsList( resources );
+  // })
+  // .ifNoErrorThen( function( )
+  // {
+  //   console.log( _.toStr( self.downloadsList, { levels : 2 } ) );
+  //   return con.give();
+  // })
+
+  con.thenDo( function( err,got )
+  {
+    // if( self.verbosity )
+    // logger.topicDown( 'Downloading of', self.currentCourse, ( err ? 'failed' : 'done' ) + '.' );
+
+    if( err )
+    throw _.errLogOnce( err );
+  });
+
+  return self;
+}
+
+//
+
+function clearIsDone()
+{
+  var self = this;
+  return self.clearDone.messageHas();
 }
 
 // --
@@ -114,6 +201,9 @@ function _make()
 {
   var self = this;
 
+  if( !self.clearIsDone() )
+  throw _.err( 'Cant make, clear is not done' );
+
   self.config.payload = { 'email' : self.config.email, 'password' : self.config.password };
 
   self.config.options =
@@ -127,7 +217,7 @@ function _make()
 
   self._makePrepareHeadersForLogin();
 
-  self._makeCompleted = true;
+  self.makeDone.give()
 
   return new wConsequence().give();
 }
@@ -137,6 +227,14 @@ function _make()
 
 function _makePrepareHeadersForLogin()
 {
+}
+
+//
+
+function makeIsDone()
+{
+  var self = this;
+  return self.makeDone.messageHas();
 }
 
 // --
@@ -163,11 +261,14 @@ function _login()
   var self = this;
   var con = new wConsequence().give();
 
+  if( self.loginIsDone() )
+  return con;
+
+  if( !self.makeIsDone() )
+  throw _.err( 'Cant login, make is not done' );
+
   if( self.verbosity )
   logger.topicUp( 'Login ..' );
-
-  if( !self.makeCompleted() )
-  con = self._make();
 
   con.ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
   .thenDo( function( err,got )
@@ -187,7 +288,7 @@ function _login()
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
     self.updateHeaders( 'Cookie', cookie );
-    self._loginCompleted = true;
+    self.loginDone.give();
 
     return got;
   });
@@ -195,61 +296,12 @@ function _login()
   return con;
 }
 
-// --
-// download
-// --
-
-function download( course )
-{
-  var self = this;
-
-  self._sync
-  .ifNoErrorThen( function()
-  {
-    return self._download( course );
-  })
-
-  return self;
-}
-
 //
 
-function _download( course )
+function loginIsDone()
 {
   var self = this;
-
-  var con = new wConsequence().give();
-
-  if( !self.loginCompleted() )
-  con = self._login();
-
-  con.ifNoErrorThen( function()
-  {
-    return self._coursesList();
-  })
-  .ifNoErrorThen( function( courses )
-  {
-    if( course === undefined )
-    course = courses[ 0 ];
-
-    return self._resourcesList( course );
-  })
-  .ifNoErrorThen( function( resources )
-  {
-    return self.makeDownloadsList( resources );
-  })
-  .ifNoErrorThen( function( )
-  {
-    console.log( _.toStr( self.downloadsList, { levels : 2 } ) );
-    return con.give();
-  })
-  .thenDo( function( err,got )
-  {
-    if( err )
-    throw _.errLogOnce( err );
-  });
-
-  return self;
+  return self.loginDone.messageHas();
 }
 
 // --
@@ -261,7 +313,7 @@ function coursesList()
   var self = this;
 
   self._sync
-  .ifNoErrorThen( function()
+  .thenDo( function()
   {
     return self._coursesList();
   });
@@ -271,23 +323,161 @@ function coursesList()
 
 //
 
-function _coursesListAct()
-{
-  var con = new wConsequence().give();
-  return con;
-}
-
-//
-
 function _coursesList()
 {
   var self = this;
 
-  if( !self.loginCompleted() )
-  return new wConsequence().error( _.err( 'User is not logged in, cant get courses list ' ) );
+  if( self.coursesListIsDone() )
+  return new wConsequence().give();
 
-  return self._coursesListAct();
+  if( !self.loginIsDone() )
+  throw _.err( 'Cant login, login is not done' );
+
+  if( self.verbosity )
+  logger.topicUp( 'List courses ..' );
+
+  return self._coursesListAct()
+  .thenDo( function( err,got )
+  {
+
+    self.coursesListDone.give( err,got );
+
+    if( self.verbosity )
+    {
+      var log = _.toStr( self._ccourses,{ json : 1 } );
+      logger.log( 'courses :' );
+      logger.log( log );
+    }
+
+    if( self.verbosity )
+    logger.topicDown( 'List courses .. ' + ( err ? 'error' : 'done' ) + '.' );
+
+    if( err )
+    throw _.errLogOnce( err );
+
+    return got;
+  });
+
 }
+
+//
+
+function coursesListIsDone()
+{
+  var self = this;
+  return self.coursesListDone.messageHas();
+}
+
+//
+
+function coursesPick( src )
+{
+  var self = this;
+
+  _.assert( arguments.length <= 1 );
+
+  self._sync
+  .thenDo( function()
+  {
+    return self._coursesPick( src );
+  });
+
+  return self;
+}
+
+//
+
+function _coursesPick( src )
+{
+  var self = this;
+
+  if( !src )
+  src = 0;
+
+  console.log( 'arguments',arguments );
+
+  _.assert( arguments.length <= 1 );
+  _.assert( _.numberIs( src ) );
+
+  if( _.numberIs( src ) )
+  self.currentCourse = self._courses[ src ]
+
+  if( !self.currentCourse )
+  throw _.err( 'Failed pick',src,'course' );
+
+  if( self.verbosity )
+  logger.log( 'Picked course',self.currentCourse.name );
+
+  return new wConsequence().give();
+}
+
+//
+
+// function courseDownload()
+// {
+//   var self = this;
+//
+//   _.assert( arguments.length === 0 );
+//
+//   self._sync
+//   .ifNoErrorThen( function()
+//   {
+//     return self._courseDownload();
+//   })
+//
+//   return self;
+// }
+//
+// //
+//
+// function _courseDownload()
+// {
+//   var self = this;
+//   var con = new wConsequence().give();
+//
+//   _.assert( arguments.length === 0 );
+//
+//   if( self.verbosity )
+//   logger.topicUp( 'Downloading course',self.currentCourse,'..' );
+//
+//   /* login */
+//
+//   if( !self.loginIsDone() )
+//   con.ifNoErrorThen( function()
+//   {
+//     return self._login();
+//   })
+//
+//   con.ifNoErrorThen( function()
+//   {
+//     return self._coursesList();
+//   })
+//   .ifNoErrorThen( function( courses )
+//   {
+//     if( course === undefined )
+//     course = courses[ 0 ];
+//     return self._resourcesList( course );
+//   })
+//   .ifNoErrorThen( function( resources )
+//   {
+//     return self.makeDownloadsList( resources );
+//   })
+//   .ifNoErrorThen( function( )
+//   {
+//     console.log( _.toStr( self.downloadsList, { levels : 2 } ) );
+//     return con.give();
+//   })
+//   .thenDo( function( err,got )
+//   {
+//     if( self.verbosity )
+//     logger.topicDown( 'Downloading of', self.currentCourse, ( err ? 'failed' : 'done' ) + '.' );
+//
+//     if( err )
+//     throw _.errLogOnce( err );
+//   });
+//
+//   return self;
+// }
 
 // --
 // resources
@@ -298,19 +488,46 @@ function resourcesList( course )
   var self = this;
 
   self._sync
-  .ifNoErrorThen( function()
+  .thenDo( function()
   {
     return self._resourcesList( course );
   })
+
+  return self;
+}
+
+//
+
+function _resourcesList()
+{
+  var self = this;
+
+  if( self.verbosity )
+  logger.topicUp( 'List resources for course',self.currentCourse.name,'..' );
+
+  _.assert( arguments.length === 0 );
+  _.assert( _.objectIs( self.currentCourse ) );
+
+  return self._resourcesListAct()
+  .thenDo( function( err,got )
+  {
+    if( self.verbosity )
+    logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
+
+    if( err )
+    throw _.errLogOnce( err );
+
+    return got;
+  });
 
 }
 
 //
 
-function _resourcesList( course )
+function resourcesListIsDone()
 {
-  var con = new wConsequence().give();
-  return con;
+  var self = this;
+  return self.resourcesListDone.messageHas();
 }
 
 // --
@@ -367,33 +584,6 @@ function _request( o )
   return con;
 }
 
-//
-
-function makeCompleted()
-{
-  var self = this;
-  return Boolean( self._makeCompleted );
-}
-
-//
-
-function loginCompleted()
-{
-  var self = this;
-  return Boolean( self._loginCompleted );
-}
-
-//
-
-function coursesListCompleted()
-{
-  var self = this;
-  return Boolean( self._coursesListCompleted );
-}
-
-
-
-
 // --
 // class
 // --
@@ -442,11 +632,26 @@ var Composes =
 var Aggregates =
 {
   config : null,
-  // userData : null,
-  siteName : null,
-  resources : [],
-  courses : null,
-  downloadsList : [],
+
+  // siteName : null,
+
+  currentPlatform : null,
+  currentCourse : null,
+  currentResource : null,
+
+  clearDone : new wConsequence().give(),
+  makeDone : new wConsequence(),
+  loginDone : new wConsequence(),
+
+  _coursesData : null,
+  _courses : null,
+  coursesListDone : new wConsequence(),
+
+  _resourcesData : null,
+  _resources : null,
+  resourceListDone : false,
+
+  _downloadsListTemp : [],
 }
 
 var Associates =
@@ -457,9 +662,6 @@ var Associates =
 var Restricts =
 {
   _sync : null,
-  _makeCompleted : false,
-  _loginCompleted : false,
-  _coursesListCompleted : false,
 }
 
 var Statics =
@@ -479,10 +681,13 @@ var Proto =
 
   init : init,
 
-  // download
+
+  // front
 
   download : download,
   _download : _download,
+  clearIsDone : clearIsDone,
+
 
   // make
 
@@ -490,28 +695,36 @@ var Proto =
   _make : _make,
   _makeAct : null,
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
-  makeCompleted : makeCompleted,
+  makeIsDone : makeIsDone,
 
 
   // login
 
   _login : _login,
   login : login,
-  loginCompleted : loginCompleted,
+  loginIsDone : loginIsDone,
 
 
   // courses
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _coursesListAct : _coursesListAct,
-  coursesListCompleted : coursesListCompleted,
+  _coursesListAct : null,
+  coursesListIsDone : coursesListIsDone,
+
+  coursesPick : coursesPick,
+  _coursesPick : _coursesPick,
+
+  // courseDownload : courseDownload,
+  // _courseDownload : _courseDownload,
 
 
   // resources
 
   resourcesList : resourcesList,
   _resourcesList : _resourcesList,
+  _resourcesListAct : null,
+  resourcesListIsDone : resourcesListIsDone,
 
 
   // etc
@@ -519,6 +732,8 @@ var Proto =
   updateHeaders : updateHeaders,
   _request : _request,
   makeDownloadsList : null,
+
+
 
   // relationships
 

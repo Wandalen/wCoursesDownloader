@@ -26,5 +26,5 @@ module.exports =
     email : 'wcoursera@gmail.com',
     password : '17159922',
   },
-  default : 'coursera'
+  defaultPlatform : 'coursera'
 }
