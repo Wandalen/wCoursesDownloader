@@ -49,7 +49,7 @@ our `Cookie` header must be replaced with value of `Set-Cookie`.
 
 ### API
 
-List of all courses : https://www.coursera.org/api/courses.v1?start={page}
+#### List of all courses : https://www.coursera.org/api/courses.v1?start={page}
 
 Example : https://www.coursera.org/api/courses.v1?start=0
 
@@ -71,7 +71,7 @@ Part of Response:
 }
 ```
 
-Get list of your courses:
+#### Get list of your courses:
 
 Simple version:
 ```
@@ -112,7 +112,7 @@ Sample of reply:
 }
 ```
 
-Get course materials, {class_name} is equal to `slug`:
+#### Get course materials, {class_name} is equal to `slug`:
 ```
 https://www.coursera.org/api/opencourse.v1/course/{class_name}?showLockedItems=true
 ```
@@ -157,7 +157,7 @@ Reply:
 }
 ```
 
-How get video info using video_id finded in response for course materials:
+#### How get video info using video_id finded in response for course materials:
 ```
 https://www.coursera.org/api/opencourse.v1/video/{video_id}
 ```
