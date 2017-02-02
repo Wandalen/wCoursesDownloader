@@ -130,7 +130,7 @@ function _download()
   .ifNoErrorThen( self._make )
   .ifNoErrorThen( self._login )
   .ifNoErrorThen( self._coursesList )
-  .ifNoErrorThen( self._coursesPick,[ 0 ] )
+  .ifNoErrorThen( self._coursePick,[ 0 ] )
   .ifNoErrorThen( self._resourcesList )
   ;
 
@@ -370,7 +370,7 @@ function coursesListIsDone()
 
 //
 
-function coursesPick( src )
+function coursePick( src )
 {
   var self = this;
 
@@ -379,7 +379,7 @@ function coursesPick( src )
   self._sync
   .thenDo( function()
   {
-    return self._coursesPick( src );
+    return self._coursePick( src );
   });
 
   return self;
@@ -387,7 +387,7 @@ function coursesPick( src )
 
 //
 
-function _coursesPick( src )
+function _coursePick( src )
 {
   var self = this;
 
@@ -712,8 +712,8 @@ var Proto =
   _coursesListAct : null,
   coursesListIsDone : coursesListIsDone,
 
-  coursesPick : coursesPick,
-  _coursesPick : _coursesPick,
+  coursePick : coursePick,
+  _coursePick : _coursePick,
 
   // courseDownload : courseDownload,
   // _courseDownload : _courseDownload,

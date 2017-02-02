@@ -5,6 +5,7 @@
 *.db
 *.sh
 *.bat
+private.txt
 tmp
 builder
 proto
