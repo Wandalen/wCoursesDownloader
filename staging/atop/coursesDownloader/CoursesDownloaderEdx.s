@@ -94,7 +94,7 @@ function _coursesListAct()
 {
   var self = this;
 
-  var con = self._request( self.config.dashboardUrl )
+  var con = self._request( self.config.enrollmentUrl )
   .thenDo( function( err, got )
   {
 
@@ -105,9 +105,23 @@ function _coursesListAct()
     if( err )
     return con.error( _.err( err ) );
 
-    self._provider.fileWrite({ pathFile : './edx_pages/dashboard.html', data : got.body, sync : 1 });
+    // self._provider.fileWrite({ pathFile : './edx_pages/dashboard.html', data : got.body, sync : 1 });
+    self._coursesData = JSON.parse( got.body );
 
-    return got.body
+    if( !self._courses )
+    self._courses = [];
+
+    self._coursesData.forEach( function( course )
+    {
+      var course_details = course.course_details;
+      var name = course_details.course_name;
+      var id = course_details.course_id;
+      var url = _.strReplaceAll( self.config.courseUrl,'{course_id}', id );
+
+      self._courses.push( { name : name, id : id, url : url } );
+    });
+
+    con.give( self._courses );
 
   });
 

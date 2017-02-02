@@ -7,6 +7,8 @@ module.exports =
     loginPageUrl : 'https://courses.edx.org/login',
     loginApiUrl : 'https://courses.edx.org/user_api/v1/account/login_session/',
     dashboardUrl : 'https://courses.edx.org/dashboard',
+    enrollmentUrl : 'https://courses.edx.org/api/enrollment/v1/enrollment',
+    courseUrl : 'https://courses.edx.org/courses/{course_id}/info',
 
     email : 'wcoursera@gmail.com',
     password : '17159922',

@@ -352,7 +352,7 @@ function _coursesList()
 
     if( self.verbosity )
     {
-      var log = _.toStr( self._courses,{ json : 1 } );
+      var log = _.toStr( got,{ json : 1 } );
       logger.log( 'courses :' );
       logger.log( log );
     }
