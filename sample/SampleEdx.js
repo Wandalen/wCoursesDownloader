@@ -11,6 +11,8 @@ con.seal( cd )
 .ifNoErrorThen( cd._make )
 .ifNoErrorThen( cd._login )
 .ifNoErrorThen( cd._coursesList )
+.ifNoErrorThen( cd._coursePick,[ 0 ] )
+.ifNoErrorThen( cd._resourcesList )
 ;
 
 con.thenDo( function( err,got )
