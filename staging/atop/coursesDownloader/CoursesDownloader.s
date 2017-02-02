@@ -344,7 +344,7 @@ function _coursesList()
 
     if( self.verbosity )
     {
-      var log = _.toStr( self._ccourses,{ json : 1 } );
+      var log = _.toStr( self._courses,{ json : 1 } );
       logger.log( 'courses :' );
       logger.log( log );
     }
@@ -511,8 +511,12 @@ function _resourcesList()
   return self._resourcesListAct()
   .thenDo( function( err,got )
   {
+
     if( self.verbosity )
     logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
+
+    if( self.verbosity )
+    logger.log( _.toStr( self._downloadsListTemp,{ levels : 2 } ) );
 
     if( err )
     throw _.errLogOnce( err );
@@ -731,7 +735,7 @@ var Proto =
 
   updateHeaders : updateHeaders,
   _request : _request,
-  makeDownloadsList : null,
+  // makeDownloadsList : null,
 
 
 

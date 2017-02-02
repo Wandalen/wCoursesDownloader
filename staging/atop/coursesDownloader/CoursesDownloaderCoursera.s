@@ -119,7 +119,7 @@ function _resourcesListAct()
 
   /* */
 
-  self._request( postUrl )
+  con = self._request( postUrl )
   .thenDo( function( err, got )
   {
 
@@ -135,31 +135,39 @@ function _resourcesListAct()
     self._resourcesData = data;
     self._resources = data.courseMaterial;
 
+  })
+  .ifNoErrorThen(function () {
+
+    return self._resourcesListParseAct( );
+  })
+  .ifNoErrorThen(function () {
+
     con.give( self._resources );
-  });
+  })
+
 
   /* */
 
-  if( self.verbosity )
-  {
-    con.ifNoErrorThen( function( resources )
-    {
-      // logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
-      con.give( resources );
-    });
-  }
+  // if( self.verbosity )
+  // {
+  //   con.ifNoErrorThen( function()
+  //   {
+  //     // logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
+  //     con.give( resources );
+  //   });
+  // }
 
   return con;
 }
 
 //
 
-function makeDownloadsList( resources )
+function _resourcesListParseAct()
 {
   var self = this;
   var con = new wConsequence().give();
 
-  var chapters = resources.elements;
+  var chapters = self._resources.elements;
 
   chapters.forEach( function ( chapter )
   {
@@ -262,8 +270,8 @@ var Proto =
   _coursesListAct : _coursesListAct,
 
   _resourcesListAct : _resourcesListAct,
+  _resourcesListParseAct : _resourcesListParseAct,
 
-  makeDownloadsList : makeDownloadsList,
   getVideoUrl : getVideoUrl,
 
   // relationships
