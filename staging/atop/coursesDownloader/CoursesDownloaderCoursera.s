@@ -80,40 +80,23 @@ function _makePrepareHeadersForLogin()
 function _coursesListAct()
 {
   var self = this;
-  var con = Parent.prototype._coursesListAct.call( self );
+  var con;
 
-  if( !self.coursesListCompleted() )
+  con = self._request
+  ({
+    url : self.config.getUserCoursesUrl,
+    headers : self.config.options.headers
+  })
+  .thenDo( function( err, got )
   {
-    if( self.verbosity )
-    logger.log( 'Trying to get courses list.' );
+    if( err )
+    throw _.errLogOnce( err );
 
-    con = self._request
-    ({
-      url : self.config.getUserCoursesUrl,
-      headers : self.config.options.headers
-    })
-    .thenDo( function( err, got )
-    {
-      if( err )
-      throw _.errLogOnce( err );
+    got.data = JSON.parse( got.body );
+    self._coursesData = got.data;
+    self._courses = got.data.linked[ 'courses.v1' ];
 
-      self._coursesListActParse( got.body );
-      self._coursesListCompleted = true;
-    });
-  }
-
-  /* */
-
-  con.ifNoErrorThen( function()
-  {
-
-    if( self.verbosity )
-    {
-      var log = _.toStr( self.courses,{ json : 1 } );
-      logger.log( log );
-    }
-
-    con.give( self.courses );
+    return self._courses;
   });
 
   return con;
@@ -121,30 +104,18 @@ function _coursesListAct()
 
 //
 
-function _coursesListActParse( body )
-{
-  var self = this;
-
-  var data = JSON.parse( body );
-
-  self.courses = data.linked[ 'courses.v1' ];
-}
-
-//
-
-function _resourcesList( course )
+function _resourcesListAct()
 {
   var self = this;
   var con = new wConsequence();
 
-  _.assert( _.objectIs( course ) );
+  _.assert( arguments.length === 0 );
+  _.assert( _.objectIs( self.currentCourse ) );
 
-  logger.log( 'Trying to get resources for : ', course.name );
+  // if( self._resources[ self.currentCourse.name ] )
+  // return con.give( self._resources[ self.currentCourse.name ] );
 
-  if( self.resources[ course.name ] )
-  return con.give( self.resources[ course.name ] );
-
-  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', course.slug );
+  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', self.currentCourse.slug );
 
   /* */
 
@@ -161,9 +132,10 @@ function _resourcesList( course )
 
     var data = JSON.parse( got.body );
 
-    self.resources[ course.name ] = data.courseMaterial;
+    self._resourcesData = data;
+    self._resources = data.courseMaterial;
 
-    con.give( self.resources[ course.name ] );
+    con.give( self._resources );
   });
 
   /* */
@@ -172,8 +144,7 @@ function _resourcesList( course )
   {
     con.ifNoErrorThen( function( resources )
     {
-      logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
-
+      // logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
       con.give( resources );
     });
   }
@@ -204,7 +175,7 @@ function makeDownloadsList( resources )
           con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
           .ifNoErrorThen( function ( url )
           {
-            self.downloadsList.push( { name : name, url : url } );
+            self._downloadsListTemp.push( { name : name, url : url } );
           });
         }
       })
@@ -289,9 +260,8 @@ var Proto =
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
   _coursesListAct : _coursesListAct,
-  _coursesListActParse : _coursesListActParse,
 
-  _resourcesList : _resourcesList,
+  _resourcesListAct : _resourcesListAct,
 
   makeDownloadsList : makeDownloadsList,
   getVideoUrl : getVideoUrl,
