@@ -515,9 +515,6 @@ function _resourcesList()
     if( self.verbosity )
     logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
 
-    if( self.verbosity )
-    logger.log( _.toStr( self._downloadsListTemp,{ levels : 2 } ) );
-
     if( err )
     throw _.errLogOnce( err );
 

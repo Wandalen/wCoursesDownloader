@@ -133,7 +133,6 @@ function _resourcesListAct()
     var data = JSON.parse( got.body );
 
     self._resourcesData = data;
-    self._resources = data.courseMaterial;
 
   })
   .ifNoErrorThen(function () {
@@ -148,14 +147,14 @@ function _resourcesListAct()
 
   /* */
 
-  // if( self.verbosity )
-  // {
-  //   con.ifNoErrorThen( function()
-  //   {
-  //     // logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
-  //     con.give( resources );
-  //   });
-  // }
+  if( self.verbosity )
+  {
+    con.ifNoErrorThen( function( resources )
+    {
+      logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
+      con.give( resources );
+    });
+  }
 
   return con;
 }
@@ -167,7 +166,10 @@ function _resourcesListParseAct()
   var self = this;
   var con = new wConsequence().give();
 
-  var chapters = self._resources.elements;
+  var chapters = self._resourcesData.courseMaterial.elements;
+
+  if( !self._resources )
+  self._resources = [];
 
   chapters.forEach( function ( chapter )
   {
@@ -183,7 +185,7 @@ function _resourcesListParseAct()
           con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
           .ifNoErrorThen( function ( url )
           {
-            self._downloadsListTemp.push( { name : name, url : url } );
+            self._resources.push( { name : name, typeName : element.content.typeName, url : url } );
           });
         }
       })
