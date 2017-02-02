@@ -511,12 +511,13 @@ function _resourcesList()
   return self._resourcesListAct()
   .thenDo( function( err,got )
   {
-
     if( self.verbosity )
     logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
 
     if( err )
     throw _.errLogOnce( err );
+
+    self.resourceListDone.give();
 
     return got;
   });
@@ -650,7 +651,7 @@ var Aggregates =
 
   _resourcesData : null,
   _resources : null,
-  resourceListDone : false,
+  resourceListDone : new wConsequence(),
 
   _downloadsListTemp : [],
 }
