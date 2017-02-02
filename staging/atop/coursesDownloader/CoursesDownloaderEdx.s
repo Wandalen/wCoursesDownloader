@@ -53,6 +53,7 @@ function _makePrepareHeadersForLogin()
 
   function _getCSRF3( cookies )
   {
+    console.log(cookies);
     var src =  cookies[ 0 ];
     src = src.split( ';' )[ 0 ];
     src = src.split( '=' );
@@ -68,12 +69,20 @@ function _makePrepareHeadersForLogin()
     con.give();
   }
 
-  con.ifNoErrorThen( _.routineJoin( self,self._request,[ self.config.loginPageUrl ] ) )
-  .got( function( err, got )
+  con.thenDo( _.routineSeal( self,self._request,[ self.config.loginPageUrl ] ) )
+  .thenDo( function( err, got )
   {
     if( err )
-    throw _.errLog( err );
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resources list. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+
+    if( err )
+    return con.error( err );
+
     return _getCSRF3( got.response.headers[ 'set-cookie' ] );
+
   });
 
   return con;
@@ -81,11 +90,28 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _getUserCoursesAct()
+function _coursesListAct()
 {
   var self = this;
 
-  throw _.err( 'not implemented edx get courses section!' );
+  var con = self._request( self.config.dashboardUrl )
+  .thenDo( function( err, got )
+  {
+
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    self._provider.fileWrite({ pathFile : './edx_pages/dashboard.html', data : got.body, sync : 1 });
+
+    return got.body
+
+  });
+
+  return con;
 
 }
 
@@ -124,7 +150,9 @@ var Proto =
 
   _makeAct : _makeAct,
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
-  _getUserCoursesAct : _getUserCoursesAct,
+
+
+  _coursesListAct : _coursesListAct,
 
 
   // relationships

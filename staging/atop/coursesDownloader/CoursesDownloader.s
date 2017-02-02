@@ -39,6 +39,8 @@ if( typeof module !== 'undefined' )
 
   require( 'wConsequence' )
 
+  require( 'wFiles' )
+
 }
 
 // constructor
@@ -90,6 +92,9 @@ function init( o )
 
   if( !self._sync )
   self._sync = new wConsequence().give();
+
+  if( !self._provider )
+  self._provider = _.FileProvider.HardDrive();
 
 }
 
@@ -215,11 +220,12 @@ function _make()
 
   self._makeAct();
 
-  self._makePrepareHeadersForLogin();
+  return self._makePrepareHeadersForLogin()
+  .ifNoErrorThen( function()
+  {
+    return self.makeDone.give();
+  });
 
-  self.makeDone.give()
-
-  return new wConsequence().give();
 }
 
 
@@ -227,6 +233,8 @@ function _make()
 
 function _makePrepareHeadersForLogin()
 {
+  var con = new wConsequence().give();
+  return con;
 }
 
 //
@@ -590,19 +598,23 @@ function _request( o )
 // class
 // --
 
-function Loader( className )
+function Loader( platform )
 {
   var self = this;
 
-  if( className === undefined )
+  if( platform === undefined )
   {
     return self.Classes[ 'CoursesDownloaderCoursera' ]();
   }
   else
   {
+    _.assert( _.strIs( platform ) );
+
+    var className = 'CoursesDownloader' + platform ;
+
     _.assert( self.Classes[ className ] );
 
-    return self.Classes[ className ]();
+    return self.Classes[ className ]({ currentPlatform : platform });
   }
 
 }
@@ -659,6 +671,7 @@ var Aggregates =
 var Associates =
 {
   _requestAct : null,
+  _provider : null,
 }
 
 var Restricts =
