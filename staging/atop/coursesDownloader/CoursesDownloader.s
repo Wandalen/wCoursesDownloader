@@ -413,71 +413,71 @@ function _coursesPick( src )
 
 //
 
-function courseDownload()
-{
-  var self = this;
-
-  _.assert( arguments.length === 0 );
-
-  self._sync
-  .ifNoErrorThen( function()
-  {
-    return self._courseDownload();
-  })
-
-  return self;
-}
-
+// function courseDownload()
+// {
+//   var self = this;
 //
-
-function _courseDownload()
-{
-  var self = this;
-  var con = new wConsequence().give();
-
-  _.assert( arguments.length === 0 );
-
-  if( self.verbosity )
-  logger.topicUp( 'Downloading course',self.currentCourse,'..' );
-
-  /* login */
-
-  if( !self.loginIsDone() )
-  con.ifNoErrorThen( function()
-  {
-    return self._login();
-  })
-
-  con.ifNoErrorThen( function()
-  {
-    return self._coursesList();
-  })
-  .ifNoErrorThen( function( courses )
-  {
-    if( course === undefined )
-    course = courses[ 0 ];
-    return self._resourcesList( course );
-  })
-  .ifNoErrorThen( function( resources )
-  {
-    return self.makeDownloadsList( resources );
-  })
-  .ifNoErrorThen( function( )
-  {
-    console.log( _.toStr( self.downloadsList, { levels : 2 } ) );
-    return con.give();
-  })
-  .thenDo( function( err,got )
-  {
-    if( self.verbosity )
-    logger.topicDown( 'Downloading of', self.currentCourse, ( err ? 'failed' : 'done' ) + '.' );
-
-    if( err )
-    throw _.errLogOnce( err );
-  });
-
-  return self;
-}
+//   _.assert( arguments.length === 0 );
+//
+//   self._sync
+//   .ifNoErrorThen( function()
+//   {
+//     return self._courseDownload();
+//   })
+//
+//   return self;
+// }
+//
+// //
+//
+// function _courseDownload()
+// {
+//   var self = this;
+//   var con = new wConsequence().give();
+//
+//   _.assert( arguments.length === 0 );
+//
+//   if( self.verbosity )
+//   logger.topicUp( 'Downloading course',self.currentCourse,'..' );
+//
+//   /* login */
+//
+//   if( !self.loginIsDone() )
+//   con.ifNoErrorThen( function()
+//   {
+//     return self._login();
+//   })
+//
+//   con.ifNoErrorThen( function()
+//   {
+//     return self._coursesList();
+//   })
+//   .ifNoErrorThen( function( courses )
+//   {
+//     if( course === undefined )
+//     course = courses[ 0 ];
+//     return self._resourcesList( course );
+//   })
+//   .ifNoErrorThen( function( resources )
+//   {
+//     return self.makeDownloadsList( resources );
+//   })
+//   .ifNoErrorThen( function( )
+//   {
+//     console.log( _.toStr( self.downloadsList, { levels : 2 } ) );
+//     return con.give();
+//   })
+//   .thenDo( function( err,got )
+//   {
+//     if( self.verbosity )
+//     logger.topicDown( 'Downloading of', self.currentCourse, ( err ? 'failed' : 'done' ) + '.' );
+//
+//     if( err )
+//     throw _.errLogOnce( err );
+//   });
+//
+//   return self;
+// }
 
 // --
 // resources
@@ -715,8 +715,8 @@ var Proto =
   coursesPick : coursesPick,
   _coursesPick : _coursesPick,
 
-  courseDownload : courseDownload,
-  _courseDownload : _courseDownload,
+  // courseDownload : courseDownload,
+  // _courseDownload : _courseDownload,
 
 
   // resources
