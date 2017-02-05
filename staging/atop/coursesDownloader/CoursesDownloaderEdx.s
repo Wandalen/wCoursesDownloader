@@ -53,6 +53,7 @@ function _makePrepareHeadersForLogin()
 
   function _getCSRF3( cookies )
   {
+    console.log(cookies);
     var src =  cookies[ 0 ];
     src = src.split( ';' )[ 0 ];
     src = src.split( '=' );
@@ -68,12 +69,20 @@ function _makePrepareHeadersForLogin()
     con.give();
   }
 
-  con.ifNoErrorThen( _.routineJoin( self,self._request,[ self.config.loginPageUrl ] ) )
-  .got( function( err, got )
+  con.thenDo( _.routineSeal( self,self._request,[ self.config.loginPageUrl ] ) )
+  .thenDo( function( err, got )
   {
     if( err )
-    throw _.errLog( err );
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resources list. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+
+    if( err )
+    return con.error( err );
+
     return _getCSRF3( got.response.headers[ 'set-cookie' ] );
+
   });
 
   return con;
@@ -81,12 +90,138 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _getUserCoursesAct()
+function _coursesListAct()
 {
   var self = this;
 
-  throw _.err( 'not implemented edx get courses section!' );
+  var con = self._request( self.config.enrollmentUrl )
+  .thenDo( function( err, got )
+  {
 
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    // self._provider.fileWrite({ pathFile : './edx_pages/dashboard.html', data : got.body, sync : 1 });
+    self._coursesData = JSON.parse( got.body );
+
+    if( !self._courses )
+    self._courses = [];
+
+    self._coursesData.forEach( function( course )
+    {
+      var course_details = course.course_details;
+      var name = course_details.course_name;
+      var id = course_details.course_id;
+      var url = _.strReplaceAll( self.config.courseUrl,'{course_id}', id );
+
+      self._courses.push( { name : name, id : id, url : url, username : course.user } );
+    });
+
+    con.give( self._courses );
+
+  });
+
+  return con;
+
+}
+
+//
+
+function _resourcesListAct()
+{
+  var self = this;
+  var con = new wConsequence();
+
+  _.assert( arguments.length === 0 );
+  _.assert( _.objectIs( self.currentCourse ) );
+
+  var urlOptions =
+  {
+    dst : self.config.courseBlocksUrl,
+    dictionary :
+    {
+      '{course_id}' : encodeURIComponent( self.currentCourse.id ),
+      '{username}' : self.currentCourse.username
+    }
+  }
+
+  var getUrl = _.strReplaceAll( urlOptions );
+
+  /* */
+
+  con = self._request( getUrl )
+  .thenDo( function( err, got )
+  {
+
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    var data = JSON.parse( got.body );
+
+    self._resourcesData = data;
+
+  })
+  .ifNoErrorThen(function () {
+
+    return self._resourcesListParseAct( );
+  })
+  .ifNoErrorThen(function () {
+
+    con.give( self._resources );
+  })
+
+
+  /* */
+
+  if( self.verbosity )
+  {
+    con.ifNoErrorThen( function( resources )
+    {
+      logger.log( 'Resources:\n', _.toStr( resources, { json : 3 } ) );
+      con.give( resources );
+    });
+  }
+
+  return con;
+}
+
+//
+
+function _resourcesListParseAct()
+{
+  var self = this;
+  var con = new wConsequence().give();
+
+  function parseBlockChilds( block )
+  {
+   //parse each child block here
+   return block.children;
+  }
+
+  if( !self._resources )
+  self._resources = [];
+
+  self._resourcesData.forEach( function( block )
+  {
+
+    if( block.type === 'chapter' )
+    {
+      var currentBlock = { name :  block.display_name, id : block.block_id, childs : [],url : block.student_view_url };
+      currentBlock.childs.push( parseBlockChilds( block ) )
+      self._resources.push( currentBlock );
+    }
+
+  });
+
+  return con;
 }
 
 // --
@@ -124,7 +259,15 @@ var Proto =
 
   _makeAct : _makeAct,
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
-  _getUserCoursesAct : _getUserCoursesAct,
+
+   //
+
+  _coursesListAct : _coursesListAct,
+
+  //
+
+  _resourcesListAct : _resourcesListAct,
+  _resourcesListParseAct : _resourcesListParseAct,
 
 
   // relationships
