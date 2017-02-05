@@ -649,7 +649,7 @@ var Aggregates =
 
   _resourcesData : null,
   _resources : null,
-  resourceListDone : false,
+  resourceListDone : new wConsequence(),
 
   _downloadsListTemp : [],
 }
