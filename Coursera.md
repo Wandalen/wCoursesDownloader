@@ -6,6 +6,7 @@ Login URL : https://www.coursera.org/api/login/v3
 Request method : POST
 
 What we need to make request:
+
 1. Create json payload:
 
   - { 'email' : your_email, 'password' : your_password, 'webrequest' : true }
@@ -127,7 +128,7 @@ Possible hierarchy:
 
 `courseMaterial -> Modules -> Lectures -> Materials -> Content( typeName,definition )`
 
-`typeName` : supplement,lecture(video),quiz etc.
+`typeName` : supplement,generic,lecture(video),quiz etc.
 
 `definition` : contains info about asset: type,id( used to get url ).
 
@@ -174,6 +175,59 @@ Reply:
         "video/webm":"video_url_here"
       }
     }
+```
+
+#### How get Assets:
+
+Asset id can be found in `courseMaterial` property [see here](#get-course-materials-class_name-is-equal-to-slug)
+For "typeName": "generic":
+
+`https://www.coursera.org/api/assets.v1?ids={id}`
+
+Example:
+
+`https://www.coursera.org/api/assets.v1?ids=Vq8hwsdaEeWGlA7xclFASw`
+
+Reply:
+
+```
+{
+  "elements": [
+    {
+      "name": "1_Strategic_Interactions.pdf",
+      "typeName": "generic",
+      "id": "Vq8hwsdaEeWGlA7xclFASw",
+      "url": {
+        "expires": 1486166400000,
+        "url": "url_to_file_here"
+      }
+    }
+  ],
+}
+```
+For typeName : "supplement":
+
+`https://www.coursera.org/api/openCourseAssets.v1/{assetId}`
+
+Example:
+
+`https://www.coursera.org/api/openCourseAssets.v1/vVFHCo8eEeaBsQ67BkAEvQ`
+
+Reply:
+
+```
+{
+  "elements": [
+    {
+      "typeName": "cml",
+      "definition": {
+        "dtdId": "supplement/1",
+        "value": "some content here"
+      },
+      "id": "vVFHCo8eEeaBsQ67BkAEvQ"
+    }
+  ],
+}
 ```
 
 <!-- https://www.coursera.org/api/courses.v1?fields=display%2CpartnerIds%2CphotoUrl%2CstartDate%2Cpartners.v1(homeLink%2Cname)&includes=partnerIds&q=watchlist&start=0 -->

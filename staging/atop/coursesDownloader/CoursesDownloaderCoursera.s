@@ -119,7 +119,7 @@ function _resourcesListAct()
 
   /* */
 
-  self._request( postUrl )
+  con = self._request( postUrl )
   .thenDo( function( err, got )
   {
 
@@ -133,10 +133,17 @@ function _resourcesListAct()
     var data = JSON.parse( got.body );
 
     self._resourcesData = data;
-    self._resources = data.courseMaterial;
+
+  })
+  .ifNoErrorThen(function () {
+
+    return self._resourcesListParseAct( );
+  })
+  .ifNoErrorThen(function () {
 
     con.give( self._resources );
-  });
+  })
+
 
   /* */
 
@@ -144,7 +151,7 @@ function _resourcesListAct()
   {
     con.ifNoErrorThen( function( resources )
     {
-      // logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
+      logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
       con.give( resources );
     });
   }
@@ -154,12 +161,15 @@ function _resourcesListAct()
 
 //
 
-function makeDownloadsList( resources )
+function _resourcesListParseAct()
 {
   var self = this;
   var con = new wConsequence().give();
 
-  var chapters = resources.elements;
+  var chapters = self._resourcesData.courseMaterial.elements;
+
+  if( !self._resources )
+  self._resources = [];
 
   chapters.forEach( function ( chapter )
   {
@@ -175,7 +185,7 @@ function makeDownloadsList( resources )
           con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
           .ifNoErrorThen( function ( url )
           {
-            self._downloadsListTemp.push( { name : name, url : url } );
+            self._resources.push( { name : name, typeName : element.content.typeName, url : url } );
           });
         }
       })
@@ -262,8 +272,8 @@ var Proto =
   _coursesListAct : _coursesListAct,
 
   _resourcesListAct : _resourcesListAct,
+  _resourcesListParseAct : _resourcesListParseAct,
 
-  makeDownloadsList : makeDownloadsList,
   getVideoUrl : getVideoUrl,
 
 
