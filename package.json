@@ -1,5 +1,5 @@
 {
-  "name": "wCoursesDownloader",
+  "name": "wDownloaderOfCourses",
   "version": "0.1.0",
   "license": "MIT",
   "description": "Module in JavaScript for downloading courses.",
@@ -14,24 +14,24 @@
       "email": "volodymyr.migdal@gmail.com"
     }
   ],
-  "main": "staging/atop/coursesDownloader/CoursesDownloader.s",
+  "main": "staging/atop/downloader/courses/Abstract.s",
   "files": [
     "staging/amid/color",
     "production"
   ],
   "directories": {
     "doc": "doc",
-    "main": "staging/atop/coursesDownloader/CoursesDownloader.s"
+    "main": "staging/atop/downloader/courses/Abstract.s"
   },
   "scripts": {
     "make_doc": "./doc.sh"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Wandalen/wCoursesDownloader.git"
+    "url": "https://github.com/Wandalen/wDownloaderOfCourses.git"
   },
   "bugs": {
-    "url": "https://github.com/Wandalen/wCoursesDownloader/issues"
+    "url": "https://github.com/Wandalen/wDownloaderOfCourses/issues"
   },
   "dependencies": {
     "wConsequence": "",

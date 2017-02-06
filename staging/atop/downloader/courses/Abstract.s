@@ -1,6 +1,6 @@
-( function _CoursesDownloader_s_( ) {
+( function _Abstract_s_( ) {
 
-'use strict';
+'use strict'; debugger;
 
 // dependencies
 
@@ -17,29 +17,36 @@ if( typeof module !== 'undefined' )
     require( 'wTools' );
   }
 
-  if( typeof wCopyable === 'undefined' )
-  try
-  {
-    require( '../../mixin/Copyable.s' );
-  }
-  catch( err )
-  {
-    require( 'wCopyable' );
-  }
+  var _ = wTools;
 
-  if( typeof wLogger === 'undefined' )
-  try
-  {
-    require( '../include/abase/object/printer/printer/Logger.s' );
-  }
-  catch( err )
-  {
-    require( 'wLogger' );
-  }
+  _.include( 'wCopyable' );
+  _.include( 'wLogger' );
+  _.include( 'wConsequence' );
+  _.include( 'wFiles' );
 
-  require( 'wConsequence' )
-
-  require( 'wFiles' )
+  // if( typeof wCopyable === 'undefined' )
+  // try
+  // {
+  //   require( '../../mixin/Copyable.s' );
+  // }
+  // catch( err )
+  // {
+  //   require( 'wCopyable' );
+  // }
+  //
+  // if( typeof wLogger === 'undefined' )
+  // try
+  // {
+  //   require( '../include/abase/object/printer/printer/Logger.s' );
+  // }
+  // catch( err )
+  // {
+  //   require( 'wLogger' );
+  // }
+  //
+  // require( 'wConsequence' );
+  //
+  // require( 'wFiles' );
 
 }
 
@@ -47,7 +54,7 @@ if( typeof module !== 'undefined' )
 
 var _ = wTools;
 var Parent = null;
-var Self = function wCoursesDownloader( o )
+var Self = function wDownloaderOfCourses( o )
 {
   if( !( this instanceof Self ) )
   if( o instanceof Self )
@@ -57,7 +64,7 @@ var Self = function wCoursesDownloader( o )
   return Self.prototype.init.apply( this,arguments );
 }
 
-Self.nameShort = 'CoursesDownloader';
+Self.nameShort = 'DownloaderOfCourses';
 
 // --
 // inter
@@ -352,9 +359,10 @@ function _coursesList()
 
     if( self.verbosity )
     {
-      var log = _.toStr( got,{ json : 1 } );
+      var log = _.toStr( got,{ levels : 2 } );
       logger.log( 'courses :' );
       logger.log( log );
+      logger.log( 'courses.' );
     }
 
     if( self.verbosity )
@@ -374,6 +382,19 @@ function coursesListIsDone()
 {
   var self = this;
   return self.coursesListDone.messageHas();
+}
+
+//
+
+function course( filter )
+{
+  var self = this;
+
+  _.assert( arguments.length === 1 );
+
+  var result = _.entityFilter( self._courses, filter );
+
+  return result;
 }
 
 //
@@ -402,16 +423,16 @@ function _coursePick( src )
   if( !src )
   src = 0;
 
-  console.log( 'arguments',arguments );
-
   _.assert( arguments.length <= 1 );
   _.assert( _.numberIs( src ) );
 
-  if( _.numberIs( src ) )
-  self.currentCourse = self._courses[ src ]
+  if( _.atomicIs( src ) )
+  self.currentCourse = self._courses[ src ];
+  else
+  self.currentCourse = self.course( src );
 
   if( !self.currentCourse )
-  throw _.err( 'Failed pick',src,'course' );
+  throw _.err( 'Failed pick course',src );
 
   if( self.verbosity )
   logger.log( 'Picked course',self.currentCourse.name );
@@ -519,8 +540,16 @@ function _resourcesList()
   return self._resourcesListAct()
   .thenDo( function( err,got )
   {
+
     if( self.verbosity )
-    logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
+    {
+      logger.log( 'Resources :' );
+      logger.log( _.toStr( self._resources, { levels : 2 } ) );
+      logger.log( 'Resources.' );
+
+      if( self.verbosity )
+      logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
+    }
 
     if( err )
     throw _.errLogOnce( err );
@@ -602,15 +631,17 @@ function Loader( platform )
 {
   var self = this;
 
+  logger.log( 'self.Classes',self.Classes );
+
   if( platform === undefined )
   {
-    return self.Classes[ 'CoursesDownloaderCoursera' ]();
+    return self.Classes[ 'Coursera' ]();
   }
   else
   {
     _.assert( _.strIs( platform ) );
 
-    var className = 'CoursesDownloader' + platform ;
+    var className = 'DownloaderOfCourses' + platform;
 
     _.assert( self.Classes[ className ] );
 
@@ -629,6 +660,8 @@ function registerClass()
   {
     var child = arguments[ a ];
     this.Classes[ child.nameShort ] = child;
+
+    logger.log( 'registered',child.nameShort );
   }
 
   return this;
@@ -727,6 +760,7 @@ var Proto =
   _coursesListAct : null,
   coursesListIsDone : coursesListIsDone,
 
+  course : course,
   coursePick : coursePick,
   _coursePick : _coursePick,
 
@@ -788,10 +822,13 @@ wTools[ Self.nameShort ] = _global_[ Self.name ] = Self;
 
 if( typeof module !== 'undefined' )
 {
-  require( './CoursesDownloaderCoursera.s' );
-  require( './CoursesDownloaderEdx.s' );
+  debugger;
+  require( './Coursera.s' );
+  debugger;
+  require( './Edx.s' );
+  debugger;
 }
 
-Self.prototype.Loader();
+// Self.prototype.Loader();
 
 })();

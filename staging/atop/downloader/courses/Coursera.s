@@ -1,4 +1,4 @@
-( function _CoursesDownloader_s_( ) {
+( function _Coursera_s_( ) {
 
 'use strict';
 
@@ -6,15 +6,15 @@
 
 if( typeof module !== 'undefined' )
 {
-  // require( 'wFiles' )
-
+  if( typeof wDownloaderOfCourses === 'undefined' )
+  require( './Abstract.s' );
 }
 
 // constructor
 
 var _ = wTools;
-var Parent = wCoursesDownloader;
-var Self = function wCoursesDownloaderCoursera( o )
+var Parent = wDownloaderOfCourses;
+var Self = function wDownloaderOfCoursesCoursera( o )
 {
   if( !( this instanceof Self ) )
   if( o instanceof Self )
@@ -24,7 +24,7 @@ var Self = function wCoursesDownloaderCoursera( o )
   return Self.prototype.init.apply( this,arguments );
 }
 
-Self.nameShort = 'CoursesDownloaderCoursera';
+Self.nameShort = 'DownloaderOfCoursesCoursera';
 
 // --
 // inter
@@ -135,26 +135,33 @@ function _resourcesListAct()
     self._resourcesData = data;
 
   })
-  .ifNoErrorThen(function () {
-
+  .ifNoErrorThen(function ()
+  {
     return self._resourcesListParseAct( );
   })
-  .ifNoErrorThen(function () {
-
-    con.give( self._resources );
+  .ifNoErrorThen(function ()
+  {
+    // !!! here was error
+    // then returns message to consequence automaitcally
+    // give gives duplicate message
+    // that's wrong
+    // con.give( self._resources );
+    return self._resources;
   })
-
 
   /* */
 
-  if( self.verbosity )
-  {
-    con.ifNoErrorThen( function( resources )
-    {
-      logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
-      con.give( resources );
-    });
-  }
+  // !!! common for all classes should be in base class
+  // verbose output is commong
+
+  // if( self.verbosity )
+  // {
+  //   con.ifNoErrorThen( function( resources )
+  //   {
+  //     logger.log( 'Resources:\n', _.toStr( resources, { levels : 3 } ) );
+  //     con.give( resources );
+  //   });
+  // }
 
   return con;
 }
@@ -239,6 +246,7 @@ function getVideoUrl( videoId, resolution )
 
 var Composes =
 {
+  currentPlatform : 'Coursera',
 }
 
 var Aggregates =
@@ -297,6 +305,7 @@ _.protoMake
   extend : Proto,
 });
 
+Parent.registerClass( Self );
 
 // accessor
 
@@ -309,7 +318,5 @@ _.accessor( Self.prototype,
 _.accessorReadOnly( Self.prototype,
 {
 });
-
-_.CoursesDownloader.registerClass( Self );
 
 })();

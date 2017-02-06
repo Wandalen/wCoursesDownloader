@@ -1,4 +1,4 @@
-( function _CoursesDownloader_s_( ) {
+( function _Edx_s_( ) {
 
 'use strict';
 
@@ -6,13 +6,15 @@
 
 if( typeof module !== 'undefined' )
 {
+  if( typeof wDownloaderOfCourses === 'undefined' )
+  require( './Abstract.s' );
 }
 
 // constructor
 
 var _ = wTools;
-var Parent = wCoursesDownloader;
-var Self = function wCoursesDownloaderEdx( o )
+var Parent = wDownloaderOfCourses;
+var Self = function wDownloaderOfCoursesEdx( o )
 {
   if( !( this instanceof Self ) )
   if( o instanceof Self )
@@ -22,7 +24,7 @@ var Self = function wCoursesDownloaderEdx( o )
   return Self.prototype.init.apply( this,arguments );
 }
 
-Self.nameShort = 'CoursesDownloaderEdx';
+Self.nameShort = 'DownloaderOfCoursesEdx';
 
 // --
 // inter
@@ -100,7 +102,10 @@ function _coursesListAct()
 
     if( !err )
     if( got.response.statusCode !== 200 )
-    err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+    {
+      debugger;
+      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+    }
 
     if( err )
     return con.error( _.err( err ) );
@@ -111,14 +116,18 @@ function _coursesListAct()
     if( !self._courses )
     self._courses = [];
 
-    self._coursesData.forEach( function( course )
+    self._coursesData.forEach( function( courseData )
     {
-      var course_details = course.course_details;
-      var name = course_details.course_name;
-      var id = course_details.course_id;
-      var url = _.strReplaceAll( self.config.courseUrl,'{course_id}', id );
+      var course = {};
+      var course_details = courseData.course_details;
+      course.name = course_details.course_name;
+      course.id = course_details.course_id;
+      course.url = _.strReplaceAll( self.config.courseUrl,'{course_id}', course.id );
+      course.username = courseData.user;
 
-      self._courses.push( { name : name, id : id, url : url, username : course.user } );
+      course.raw = courseData;
+
+      self._courses.push( course );
     });
 
     con.give( self._courses );
@@ -169,26 +178,33 @@ function _resourcesListAct()
     self._resourcesData = data;
 
   })
-  .ifNoErrorThen(function () {
-
+  .ifNoErrorThen(function ()
+  {
     return self._resourcesListParseAct( );
   })
-  .ifNoErrorThen(function () {
-
-    con.give( self._resources );
+  .ifNoErrorThen(function ()
+  {
+    // !!! here was error
+    // then returns message to consequence automaitcally
+    // give gives duplicate message
+    // that's wrong
+    // con.give( self._resources );
+    return self._resources;
   })
 
+  // !!! common for all classes should be in base class
+  // verbose output is commong
 
-  /* */
-
-  if( self.verbosity )
-  {
-    con.ifNoErrorThen( function( resources )
-    {
-      logger.log( 'Resources:\n', _.toStr( resources, { json : 3 } ) );
-      con.give( resources );
-    });
-  }
+  // /* */
+  //
+  // if( self.verbosity )
+  // {
+  //   con.ifNoErrorThen( function( resources )
+  //   {
+  //     logger.log( 'Resources:\n', _.toStr( resources, { json : 3 } ) );
+  //     con.give( resources );
+  //   });
+  // }
 
   return con;
 }
@@ -230,6 +246,7 @@ function _resourcesListParseAct()
 
 var Composes =
 {
+  currentPlatform : 'Edx',
 }
 
 var Aggregates =
@@ -290,6 +307,7 @@ _.protoMake
   extend : Proto,
 });
 
+Parent.registerClass( Self );
 
 // accessor
 
@@ -302,7 +320,5 @@ _.accessor( Self.prototype,
 _.accessorReadOnly( Self.prototype,
 {
 });
-
-_.CoursesDownloader.registerClass( Self );
 
 })();
