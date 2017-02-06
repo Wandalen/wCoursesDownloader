@@ -137,7 +137,7 @@ function _resourcesListAct()
   })
   .ifNoErrorThen(function ()
   {
-    return self._resourcesListParseAct( );
+    return self._resourcesListRefineAct( );
   })
   .ifNoErrorThen(function ()
   {
@@ -168,7 +168,7 @@ function _resourcesListAct()
 
 //
 
-function _resourcesListParseAct()
+function _resourcesListRefineAct()
 {
   var self = this;
   var con = new wConsequence().give();
@@ -280,7 +280,7 @@ var Proto =
   _coursesListAct : _coursesListAct,
 
   _resourcesListAct : _resourcesListAct,
-  _resourcesListParseAct : _resourcesListParseAct,
+  _resourcesListRefineAct : _resourcesListRefineAct,
 
   getVideoUrl : getVideoUrl,
 

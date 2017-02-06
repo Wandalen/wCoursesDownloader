@@ -124,7 +124,6 @@ function _coursesListAct()
       course.id = course_details.course_id;
       course.url = _.strReplaceAll( self.config.courseUrl,'{course_id}', course.id );
       course.username = courseData.user;
-
       course.raw = courseData;
 
       self._courses.push( course );
@@ -177,11 +176,12 @@ function _resourcesListAct()
 
     self._resourcesData = data;
 
+    return self._resourcesListRefineAct( );
   })
-  .ifNoErrorThen(function ()
-  {
-    return self._resourcesListParseAct( );
-  })
+  // .ifNoErrorThen(function ()
+  // {
+  //   return self._resourcesListRefineAct( );
+  // })
   .ifNoErrorThen(function ()
   {
     // !!! here was error
@@ -211,7 +211,7 @@ function _resourcesListAct()
 
 //
 
-function _resourcesListParseAct()
+function _resourcesListRefineAct()
 {
   var self = this;
   var con = new wConsequence().give();
@@ -284,7 +284,7 @@ var Proto =
   //
 
   _resourcesListAct : _resourcesListAct,
-  _resourcesListParseAct : _resourcesListParseAct,
+  _resourcesListRefineAct : _resourcesListRefineAct,
 
 
   // relationships

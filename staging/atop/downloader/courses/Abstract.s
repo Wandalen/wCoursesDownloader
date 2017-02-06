@@ -1,6 +1,6 @@
 ( function _Abstract_s_( ) {
 
-'use strict'; debugger;
+'use strict';
 
 // dependencies
 
@@ -23,30 +23,6 @@ if( typeof module !== 'undefined' )
   _.include( 'wLogger' );
   _.include( 'wConsequence' );
   _.include( 'wFiles' );
-
-  // if( typeof wCopyable === 'undefined' )
-  // try
-  // {
-  //   require( '../../mixin/Copyable.s' );
-  // }
-  // catch( err )
-  // {
-  //   require( 'wCopyable' );
-  // }
-  //
-  // if( typeof wLogger === 'undefined' )
-  // try
-  // {
-  //   require( '../include/abase/object/printer/printer/Logger.s' );
-  // }
-  // catch( err )
-  // {
-  //   require( 'wLogger' );
-  // }
-  //
-  // require( 'wConsequence' );
-  //
-  // require( 'wFiles' );
 
 }
 
@@ -357,9 +333,17 @@ function _coursesList()
 
     self.coursesListDone.give( err,got );
 
+    if( Config.debug )
+    {
+      _.each( self._courses, function( course,k,iteration )
+      {
+        _.assertMapHasOnly( course,self.Structure.Course );
+      });
+    }
+
     if( self.verbosity )
     {
-      var log = _.toStr( got,{ levels : 2 } );
+      var log = _.toStr( got,{ levels : 3 } );
       logger.log( 'courses :' );
       logger.log( log );
       logger.log( 'courses.' );
@@ -631,8 +615,6 @@ function Loader( platform )
 {
   var self = this;
 
-  logger.log( 'self.Classes',self.Classes );
-
   if( platform === undefined )
   {
     return self.Classes[ 'Coursera' ]();
@@ -660,11 +642,29 @@ function registerClass()
   {
     var child = arguments[ a ];
     this.Classes[ child.nameShort ] = child;
-
-    logger.log( 'registered',child.nameShort );
   }
 
   return this;
+}
+
+// --
+// structures
+// --
+
+var Course = _.like()
+.also
+({
+  name : null,
+  id : null,
+  url : null,
+  username : null,
+  raw : null,
+})
+.end;
+
+var Structure =
+{
+  Course : Course,
 }
 
 // --
@@ -718,6 +718,7 @@ var Statics =
   Classes : {},
   registerClass : registerClass,
   Loader : Loader,
+  Structure : Structure,
 }
 
 // --
@@ -822,11 +823,8 @@ wTools[ Self.nameShort ] = _global_[ Self.name ] = Self;
 
 if( typeof module !== 'undefined' )
 {
-  debugger;
   require( './Coursera.s' );
-  debugger;
   require( './Edx.s' );
-  debugger;
 }
 
 // Self.prototype.Loader();
