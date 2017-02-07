@@ -755,6 +755,7 @@ var Resource = _.like()
 ({
   name : null,
   id : null,
+  path : null,
   dataUrl : null,
   pageUrl : null,
   type : null,

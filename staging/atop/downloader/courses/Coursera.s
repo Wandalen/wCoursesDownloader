@@ -190,36 +190,87 @@ function _resourcesListRefineAct()
   var self = this;
   var con = new wConsequence().give();
 
-  var chapters = self._resourcesData.courseMaterial.elements;
+  var elements = self._resourcesData.courseMaterial.elements;
 
   if( !self._resources )
   self._resources = [];
 
-  chapters.forEach( function ( chapter )
+  var weekCounter = 0;
+
+  function _makeList( element,parent )
   {
-    chapter.elements.forEach( function ( lecture )
+    var resource = {};
+
+    resource.name = element.name;
+    resource.id  = element.id;
+
+    if( parent )
     {
-      lecture.elements.forEach( function ( element )
+      resource.path = 'Week ' + weekCounter + '/' + parent.name;
+
+      parent.elements.push( resource.id )
+    }
+
+    if( element.description )
+    {
+      resource.type = 'week';
+      ++weekCounter;
+      var urlOptions =
       {
-        if( element.content.typeName === 'lecture' )
+        dst : self.config.weekUrl,
+        dictionary :
         {
-          var videoId = element.content.definition.videoId;
-
-          con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
-          .ifNoErrorThen( function ( url )
-          {
-            var resource = {};
-            resource.name = element.name;
-            // resource.id  = ;
-            // resource.url = url;
-            resource.type = element.content.typeName;
-            resource.raw =  element;
-            self._resources.push( resource );
-          });
+          '{class_name}' : self.currentCourse.raw.slug,
+          '{weekCounter}' : '' + weekCounter,
         }
-      })
-    });
+      }
+    }
 
+    if( element.content )
+    {
+      resource.type = element.content.typeName;
+
+      var urlOptions =
+      {
+        dst : self.config.resourcePageUrl,
+        dictionary:
+        {
+          '{class_name}' : self.currentCourse.raw.slug,
+          '{type}' : resource.type,
+          '{id}' : resource.id,
+        }
+      }
+    }
+
+    if( urlOptions )
+    resource.pageUrl = _.strReplaceAll( urlOptions );
+
+
+    resource.raw =  element;
+
+    self._resources.push( resource );
+
+    if( element.elements )
+    {
+      if( !resource.type )
+      resource.type = 'module';
+
+      if( !resource.elements )
+      resource.elements = [];
+
+      element.elements.forEach( function ( element )
+      {
+        _makeList( element, resource );
+      });
+    }
+
+  }
+
+  //
+
+  elements.forEach( function ( element )
+  {
+    _makeList( element );
   });
 
   return con;

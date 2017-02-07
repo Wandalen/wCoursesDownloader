@@ -36,6 +36,8 @@ module.exports =
     courseMaterials: 'https://www.coursera.org/api/opencourse.v1/course/{class_name}?showLockedItems=true',
     getVideoApi : 'https://www.coursera.org/api/opencourse.v1/video/{id}',
     courseUrl : 'https://www.coursera.org/learn/{class_name}',
+    weekUrl : 'https://www.coursera.org/learn/{class_name}/home/week/{weekCounter}',
+    resourcePageUrl : 'https://www.coursera.org/learn/{class_name}/{type}/{id}',
 
     email : 'wcoursera@gmail.com',
     password : '17159922',
