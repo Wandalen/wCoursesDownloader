@@ -77,26 +77,28 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _coursesListAct()
+function _coursesListAct( data )
 {
   var self = this;
   var con;
 
-  con = self._request
-  ({
-    url : self.config.getUserCoursesUrl,
-    headers : self.config.options.headers
-  })
-  .thenDo( function( err, got )
+  con = Parent.prototype._coursesListAct.call( self );
+
+  con.thenDo( function()
   {
-    if( err )
-    throw _.errLogOnce( err );
+    self._coursesData = JSON.parse( data ).linked[ 'courses.v1' ];
 
-    got.data = JSON.parse( got.body );
-    self._coursesData = got.data;
-    self._courses = got.data.linked[ 'courses.v1' ];
+    self._coursesData.forEach( function( courseData )
+    {
+      var course = {};
+      course.name = courseData.name;
+      course.id = courseData.id;
+      course.url = _.strReplaceAll( self.config.courseUrl,'{class_name}', courseData.slug );
+      course.raw = courseData;
+      self._courses.push( course );
+    });
 
-    return self._courses;
+    con.give( self._courses );
   });
 
   return con;
@@ -115,7 +117,7 @@ function _resourcesListAct()
   // if( self._resources[ self.currentCourse.name ] )
   // return con.give( self._resources[ self.currentCourse.name ] );
 
-  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', self.currentCourse.slug );
+  var postUrl = _.strReplaceAll( self.config.courseMaterials,'{class_name}', self.currentCourse.raw.slug );
 
   /* */
 
@@ -187,12 +189,17 @@ function _resourcesListRefineAct()
         if( element.content.typeName === 'lecture' )
         {
           var videoId = element.content.definition.videoId;
-          var name = element.name;
 
           con.thenDo( _.routineSeal( self,self.getVideoUrl,[ videoId, '720p' ] ) )
           .ifNoErrorThen( function ( url )
           {
-            self._resources.push( { name : name, typeName : element.content.typeName, url : url } );
+            var resource = {};
+            resource.name = element.name;
+            // resource.id  = ;
+            resource.url = url;
+            resource.type = element.content.typeName;
+            resource.raw =  element;
+            self._resources.push( resource );
           });
         }
       })

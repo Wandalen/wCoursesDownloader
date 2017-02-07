@@ -327,10 +327,26 @@ function _coursesList()
   if( self.verbosity )
   logger.topicUp( 'List courses ..' );
 
-  return self._coursesListAct()
+  var con = self._request( self.config.getUserCoursesUrl )
+  .thenDo( function( err, got )
+  {
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    {
+      debugger;
+      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+    }
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    if( !self._courses )
+    self._courses = [];
+
+    return self._coursesListAct( got.body )
+  })
   .thenDo( function( err,got )
   {
-
     self.coursesListDone.give( err,got );
 
     if( Config.debug )
@@ -358,6 +374,15 @@ function _coursesList()
     return got;
   });
 
+  return con;
+}
+
+//
+
+function _coursesListAct()
+{
+  var con = new wConsequence().give();
+  return con;
 }
 
 //
@@ -524,6 +549,13 @@ function _resourcesList()
   return self._resourcesListAct()
   .thenDo( function( err,got )
   {
+    if( Config.debug )
+    {
+      _.each( got, function( resource,k,iteration )
+      {
+        _.assertMapHasOnly( resource,self.Structure.Resource );
+      });
+    }
 
     if( self.verbosity )
     {
@@ -662,9 +694,24 @@ var Course = _.like()
 })
 .end;
 
+//
+
+var Resource = _.like()
+.also
+({
+  name : null,
+  id : null,
+  url : null,
+  type : null,
+  childs : null,
+  raw : null,
+})
+.end;
+
 var Structure =
 {
   Course : Course,
+  Resource : Resource,
 }
 
 // --
@@ -758,7 +805,7 @@ var Proto =
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _coursesListAct : null,
+  _coursesListAct : _coursesListAct,
   coursesListIsDone : coursesListIsDone,
 
   course : course,

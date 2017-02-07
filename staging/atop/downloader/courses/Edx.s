@@ -92,29 +92,16 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _coursesListAct()
+function _coursesListAct( data )
 {
   var self = this;
 
-  var con = self._request( self.config.enrollmentUrl )
-  .thenDo( function( err, got )
+  // var con = self._request( self.config.getUserCoursesUrl )
+  var con = Parent.prototype._coursesListAct.call( self );
+
+  con.thenDo( function()
   {
-
-    if( !err )
-    if( got.response.statusCode !== 200 )
-    {
-      debugger;
-      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
-    }
-
-    if( err )
-    return con.error( _.err( err ) );
-
-    // self._provider.fileWrite({ pathFile : './edx_pages/dashboard.html', data : got.body, sync : 1 });
-    self._coursesData = JSON.parse( got.body );
-
-    if( !self._courses )
-    self._courses = [];
+    self._coursesData = JSON.parse( data );
 
     self._coursesData.forEach( function( courseData )
     {
@@ -178,10 +165,6 @@ function _resourcesListAct()
 
     return self._resourcesListRefineAct( );
   })
-  // .ifNoErrorThen(function ()
-  // {
-  //   return self._resourcesListRefineAct( );
-  // })
   .ifNoErrorThen(function ()
   {
     // !!! here was error
@@ -219,7 +202,7 @@ function _resourcesListRefineAct()
   function parseBlockChilds( block )
   {
    //parse each child block here
-   return block.children;
+   //
   }
 
   if( !self._resources )
@@ -230,9 +213,15 @@ function _resourcesListRefineAct()
 
     if( block.type === 'chapter' )
     {
-      var currentBlock = { name :  block.display_name, id : block.block_id, childs : [],url : block.student_view_url };
-      currentBlock.childs.push( parseBlockChilds( block ) )
-      self._resources.push( currentBlock );
+      var resource = {};
+      resource.name = block.display_name;
+      resource.id  = block.block_id;
+      resource.url = block.student_view_url;
+      resource.type = block.type;
+      resource.childs = [];
+      resource.raw =  block;
+      // currentBlock.childs.push( parseBlockChilds( block ) )
+      self._resources.push( resource );
     }
 
   });
