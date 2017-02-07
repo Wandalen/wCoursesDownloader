@@ -77,18 +77,20 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _coursesListAct( data )
+function _coursesListAct()
 {
   var self = this;
-  var con;
+  var con = new wConsequence().give();
 
-  con = Parent.prototype._coursesListAct.call( self );
+  _.assert( arguments.length === 0 );
 
   con.thenDo( function()
   {
-    self._coursesData = JSON.parse( data ).linked[ 'courses.v1' ];
+    // self._coursesData = JSON.parse( data ).linked[ 'courses.v1' ];
 
-    self._coursesData.forEach( function( courseData )
+    logger.log( 'self._coursesData',_.toStr( self._coursesData,{ levels : 4 } ) );
+
+    self._coursesData[ 'linked' ][ 'courses.v1' ].forEach( function( courseData )
     {
       var course = {};
       course.name = courseData.name;

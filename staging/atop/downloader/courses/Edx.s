@@ -92,16 +92,16 @@ function _makePrepareHeadersForLogin()
 
 //
 
-function _coursesListAct( data )
+function _coursesListAct( )
 {
   var self = this;
+  var con = new wConsequence().give();
 
-  // var con = self._request( self.config.getUserCoursesUrl )
-  var con = Parent.prototype._coursesListAct.call( self );
+  _.assert( arguments.length === 0 );
 
   con.thenDo( function()
   {
-    self._coursesData = JSON.parse( data );
+    // self._coursesData = JSON.parse( data );
 
     self._coursesData.forEach( function( courseData )
     {
@@ -121,7 +121,6 @@ function _coursesListAct( data )
   });
 
   return con;
-
 }
 
 //

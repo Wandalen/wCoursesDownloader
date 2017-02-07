@@ -307,7 +307,7 @@ function coursesList()
   .thenDo( function()
   {
     return self._coursesList();
-  });
+  }); 
 
   return self;
 }
@@ -330,6 +330,7 @@ function _coursesList()
   var con = self._request( self.config.getUserCoursesUrl )
   .thenDo( function( err, got )
   {
+
     if( !err )
     if( got.response.statusCode !== 200 )
     {
@@ -343,12 +344,14 @@ function _coursesList()
     if( !self._courses )
     self._courses = [];
 
-    return self._coursesListAct( got.body )
+    self._coursesData = JSON.parse( got.body );
+
+    return self._coursesListAct()
   })
   .thenDo( function( err,got )
   {
-    self.coursesListDone.give( err,got );
 
+    if( !err )
     if( Config.debug )
     {
       _.each( self._courses, function( course,k,iteration )
@@ -357,7 +360,15 @@ function _coursesList()
       });
     }
 
+    if( err )
+    throw err;
+    return got;
+  })
+  .thenDo( function( err,got )
+  {
+
     if( self.verbosity )
+    if( !err )
     {
       var log = _.toStr( got,{ levels : 3 } );
       logger.log( 'courses :' );
@@ -367,6 +378,8 @@ function _coursesList()
 
     if( self.verbosity )
     logger.topicDown( 'List courses .. ' + ( err ? 'error' : 'done' ) + '.' );
+
+    self.coursesListDone.give( err,got );
 
     if( err )
     throw _.errLogOnce( err );
@@ -379,11 +392,11 @@ function _coursesList()
 
 //
 
-function _coursesListAct()
-{
-  var con = new wConsequence().give();
-  return con;
-}
+// function _coursesListAct()
+// {
+//   var con = new wConsequence().give();
+//   return con;
+// }
 
 //
 
@@ -805,7 +818,7 @@ var Proto =
 
   coursesList : coursesList,
   _coursesList : _coursesList,
-  _coursesListAct : _coursesListAct,
+  _coursesListAct : null,
   coursesListIsDone : coursesListIsDone,
 
   course : course,
