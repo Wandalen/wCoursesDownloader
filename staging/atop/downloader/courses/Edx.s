@@ -207,25 +207,38 @@ function _resourcesListRefineAct()
   if( !self._resources )
   self._resources = [];
 
-  self._resourcesData.forEach( function( block )
+  self._resourcesData.forEach( function( data )
   {
 
-    // if( block.type === 'chapter' )
+    // if( data.type === 'chapter' )
     {
       var resource = {};
-      resource.name = block.display_name;
-      resource.id  = block.block_id;
-      resource.url = block.student_view_url;
-      resource.type = block.type;
-      resource.childs = [];
-      resource.raw =  block;
-      // currentBlock.childs.push( parseBlockChilds( block ) )
+      resource.name = data.display_name;
+      resource.id  = data.block_id;
+      resource.url = data.student_view_url;
+      resource.type = data.type;
+      //resource.elements = [];
+      resource.elements = data.children || [];
+      resource.raw =  data;
+      // currentBlock.elements.push( parseBlockChilds( data ) )
       self._resources.push( resource );
     }
 
   });
 
   return con;
+}
+
+// --
+// type
+// --
+
+var ResourceTypeMap =
+{
+  'discussion' : 'discussion',
+  'problem' : 'problem',
+  'html' : 'html',
+  'vertical' : 'html',
 }
 
 // --

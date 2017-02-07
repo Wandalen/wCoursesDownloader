@@ -364,27 +364,24 @@ function _coursesList()
     throw err;
     return got;
   })
-  .thenDo( function( err,got )
+  .thenDo( function( err,courses )
   {
 
     if( self.verbosity )
     if( !err )
     {
-      var log = _.toStr( got,{ levels : 2, wrap : 1 } );
-      logger.log( 'courses :' );
-      logger.log( log );
-      logger.log( 'courses.' );
+      self.logElementsOf( 'Courses',self._courses );
     }
 
     if( self.verbosity )
     logger.topicDown( 'List courses .. ' + ( err ? 'error' : 'done' ) + '.' );
 
-    self.coursesListDone.give( err,got );
+    self.coursesListDone.give( err,courses );
 
     if( err )
     throw _.errLogOnce( err );
 
-    return got;
+    return courses;
   });
 
   return con;
@@ -622,11 +619,10 @@ function _resourcesList()
 
     if( self.verbosity )
     {
-      logger.log( 'Resources :' );
-      logger.log( _.toStr( self._resources, { levels : 2 } ) );
-      logger.log( 'Resources.' );
 
-      logger.log( '*.type',_.entitySelectUnique( self._resources,'*.type' ) );
+      self.logElementsOf( 'Resources',self._resources );
+
+      logger.log( '*.type :',_.entitySelectUnique( self._resources,'*.type' ) );
 
       if( self.verbosity )
       logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
@@ -707,6 +703,17 @@ function _request( o )
   return con;
 }
 
+//
+
+function logElementsOf( name,elements )
+{
+
+  logger.log( _.entityLength( elements ),name,':' );
+  logger.log( _.toStr( elements, { levels : 2 } ) );
+  logger.log( _.entityLength( elements ),name + '.' );
+
+}
+
 // --
 // class
 // --
@@ -771,7 +778,8 @@ var Resource = _.like()
   id : null,
   url : null,
   type : null,
-  childs : null,
+  elements : null,
+  bottom : null,
   raw : null,
 })
 .end;
@@ -900,6 +908,7 @@ var Proto =
 
   _updateHeaders : _updateHeaders,
   _request : _request,
+  logElementsOf : logElementsOf,
   // makeDownloadsList : null,
 
 
