@@ -327,30 +327,9 @@ function _coursesList()
   if( self.verbosity )
   logger.topicUp( 'List courses ..' );
 
-  var con = self._request( self.config.getUserCoursesUrl )
-  .thenDo( function( err, got )
-  {
-
-    if( !err )
-    if( got.response.statusCode !== 200 )
-    {
-      debugger;
-      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
-    }
-
-    if( err )
-    return con.error( _.err( err ) );
-
-    if( !self._courses )
-    self._courses = [];
-
-    self._coursesData = JSON.parse( got.body );
-
-    return self._coursesListAct()
-  })
+  return self._coursesListAct()
   .thenDo( function( err,got )
   {
-
     if( !err )
     if( Config.debug )
     {
@@ -384,7 +363,7 @@ function _coursesList()
     return courses;
   });
 
-  return con;
+  // return con;
 }
 
 //

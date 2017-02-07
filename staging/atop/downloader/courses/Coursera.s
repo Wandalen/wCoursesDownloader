@@ -84,9 +84,25 @@ function _coursesListAct()
 
   _.assert( arguments.length === 0 );
 
-  con.thenDo( function()
+  return self._request( self.config.getUserCoursesUrl )
+  .thenDo( function( err, got )
   {
-    // self._coursesData = JSON.parse( data ).linked[ 'courses.v1' ];
+
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    {
+      debugger;
+      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+    }
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    if( !self._courses )
+    self._courses = [];
+
+    self._coursesData = JSON.parse( got.body );
+
     // logger.log( 'self._coursesData',_.toStr( self._coursesData,{ levels : 4 } ) );
 
     self._coursesData[ 'linked' ][ 'courses.v1' ].forEach( function( courseData )
@@ -99,10 +115,9 @@ function _coursesListAct()
       self._courses.push( course );
     });
 
-    con.give( self._courses );
+    return self._courses;
   });
 
-  return con;
 }
 
 //
@@ -197,7 +212,7 @@ function _resourcesListRefineAct()
             var resource = {};
             resource.name = element.name;
             // resource.id  = ;
-            resource.url = url;
+            // resource.url = url;
             resource.type = element.content.typeName;
             resource.raw =  element;
             self._resources.push( resource );
