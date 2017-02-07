@@ -236,10 +236,12 @@ function _resourcesListRefineAct()
 
 var ResourceKindMap =
 {
+
   'discussion' : 'discussion',
   'problem' : 'problem',
   'html' : 'html',
   'video' : 'video',
+
   'vertical' : 'page',
   'sequential' : 'pages',
   'chapter' : 'chapter',
