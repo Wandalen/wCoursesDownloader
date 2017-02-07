@@ -217,7 +217,7 @@ function _resourcesListRefineAct()
       resource.id  = data.block_id;
       resource.dataUrl = data.student_view_url;
       resource.pageUrl = data.lms_web_url;
-      resource.type = data.type;
+      resource.kind = data.type;
       //resource.elements = [];
       resource.elements = data.children || [];
       resource.raw =  data;
@@ -234,7 +234,7 @@ function _resourcesListRefineAct()
 // type
 // --
 
-var ResourceTypeMap =
+var ResourceKindMap =
 {
   'discussion' : 'discussion',
   'problem' : 'problem',
@@ -268,6 +268,7 @@ var Restricts =
 
 var Statics =
 {
+  ResourceKindMap : ResourceKindMap,
 }
 
 // --

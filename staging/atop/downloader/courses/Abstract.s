@@ -622,7 +622,7 @@ function _resourcesList()
 
       self.logElementsOf( 'Resources',self._resources );
 
-      logger.log( '*.type :',_.entitySelectUnique( self._resources,'*.type' ) );
+      logger.log( '*.kind :',_.entitySelectUnique( self._resources,'*.kind' ) );
 
       if( self.verbosity )
       logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
@@ -778,7 +778,7 @@ var Resource = _.like()
   id : null,
   dataUrl : null,
   pageUrl : null,
-  type : null,
+  kind : null,
   elements : null,
   bottom : null,
   raw : null,
