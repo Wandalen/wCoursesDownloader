@@ -87,8 +87,7 @@ function _coursesListAct()
   con.thenDo( function()
   {
     // self._coursesData = JSON.parse( data ).linked[ 'courses.v1' ];
-
-    logger.log( 'self._coursesData',_.toStr( self._coursesData,{ levels : 4 } ) );
+    // logger.log( 'self._coursesData',_.toStr( self._coursesData,{ levels : 4 } ) );
 
     self._coursesData[ 'linked' ][ 'courses.v1' ].forEach( function( courseData )
     {
@@ -286,7 +285,11 @@ var Proto =
   _makeAct : _makeAct,
   _makePrepareHeadersForLogin : _makePrepareHeadersForLogin,
 
+  //
+
   _coursesListAct : _coursesListAct,
+
+  //
 
   _resourcesListAct : _resourcesListAct,
   _resourcesListRefineAct : _resourcesListRefineAct,

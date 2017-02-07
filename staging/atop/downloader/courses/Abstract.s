@@ -278,7 +278,7 @@ function _login()
     return con.error( err );
 
     var cookie = got.response.headers[ 'set-cookie' ].join( ';' );
-    self.updateHeaders( 'Cookie', cookie );
+    self._updateHeaders( 'Cookie', cookie );
     self.loginDone.give();
 
     return got;
@@ -307,7 +307,7 @@ function coursesList()
   .thenDo( function()
   {
     return self._coursesList();
-  }); 
+  });
 
   return self;
 }
@@ -602,7 +602,7 @@ function resourcesListIsDone()
 // etc
 // --
 
-function updateHeaders( name, value )
+function _updateHeaders( name, value )
 {
   /* !!! what is it for? */
   var self = this;
@@ -623,8 +623,11 @@ function _request( o )
   if( _.strIs( o ) )
   o = { url : o };
 
-  logger.log( 'request' );
-  logger.log( _.toStr( o,{ levels : 5 } ) );
+  if( self.verbosity > 1 )
+  {
+    logger.log( 'request' );
+    logger.log( _.toStr( o,{ levels : 5 } ) );
+  }
 
   var callback = o.callback;
   if( callback )
@@ -839,7 +842,7 @@ var Proto =
 
   // etc
 
-  updateHeaders : updateHeaders,
+  _updateHeaders : _updateHeaders,
   _request : _request,
   // makeDownloadsList : null,
 
