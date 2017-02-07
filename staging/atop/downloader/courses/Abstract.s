@@ -20,9 +20,10 @@ if( typeof module !== 'undefined' )
   var _ = wTools;
 
   _.include( 'wCopyable' );
-  _.include( 'wLogger' );
   _.include( 'wConsequence' );
+  _.include( 'wLogger' );
   _.include( 'wFiles' );
+  _.include( 'wNameMapper' );
 
 }
 
@@ -592,7 +593,8 @@ function _resourcesList()
     {
       _.each( got, function( resource,k,iteration )
       {
-        _.assertMapHasOnly( resource,self.Structure.Resource );
+        _.assertMapHasOnly( resource,self.Structure.Resource,'resource has unknown fields' );
+        _.assert( self.ResourceKindArray.indexOf( resource.kind ) !== -1,'unknown kind of resource',resource.kind );
       });
     }
 
@@ -734,8 +736,18 @@ function registerClass()
 }
 
 // --
-// structures
+// type
 // --
+
+var ResourceKindArray =
+[
+  /* terminal */
+  'discussion','problem','html','video',
+  /* non-terminal */
+  'page', 'section', 'chapter','course',
+];
+
+//
 
 var Course = _.like()
 .also
@@ -823,6 +835,7 @@ var Statics =
   registerClass : registerClass,
   Loader : Loader,
   Structure : Structure,
+  ResourceKindArray : ResourceKindArray,
 }
 
 // --

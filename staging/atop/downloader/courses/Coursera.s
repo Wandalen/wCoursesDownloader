@@ -213,7 +213,7 @@ function _resourcesListRefineAct()
 
     if( element.description )
     {
-      resource.type = 'week';
+      resource.kind = 'week';
       ++weekCounter;
       var urlOptions =
       {
@@ -228,7 +228,7 @@ function _resourcesListRefineAct()
 
     if( element.content )
     {
-      resource.type = element.content.typeName;
+      resource.kind = element.content.typeName;
 
       var urlOptions =
       {
@@ -236,7 +236,7 @@ function _resourcesListRefineAct()
         dictionary:
         {
           '{class_name}' : self.currentCourse.raw.slug,
-          '{type}' : resource.type,
+          '{type}' : resource.kind,
           '{id}' : resource.id,
         }
       }
@@ -252,8 +252,8 @@ function _resourcesListRefineAct()
 
     if( element.elements )
     {
-      if( !resource.type )
-      resource.type = 'module';
+      if( !resource.kind )
+      resource.kind = 'module';
 
       if( !resource.elements )
       resource.elements = [];

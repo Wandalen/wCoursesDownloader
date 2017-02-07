@@ -230,7 +230,7 @@ function _resourcesListRefineAct()
       resource.id  = data.block_id;
       resource.dataUrl = data.student_view_url;
       resource.pageUrl = data.lms_web_url;
-      resource.kind = data.type;
+      resource.kind = self.ResourceKindMapper.valueFor( data.type );
       //resource.elements = [];
       resource.elements = data.children || [];
       resource.raw =  data;
@@ -248,18 +248,24 @@ function _resourcesListRefineAct()
 // type
 // --
 
-var ResourceKindMap =
-{
+var ResourceKindMapper = wNameMapper
+({
+
+  /* terminal */
 
   'discussion' : 'discussion',
   'problem' : 'problem',
   'html' : 'html',
   'video' : 'video',
 
+  /* non-terminal */
+
   'vertical' : 'page',
-  'sequential' : 'pages',
+  'sequential' : 'section',
   'chapter' : 'chapter',
-}
+  'course' : 'course',
+
+});
 
 // --
 // relationships
@@ -284,7 +290,7 @@ var Restricts =
 
 var Statics =
 {
-  ResourceKindMap : ResourceKindMap,
+  ResourceKindMapper : ResourceKindMapper,
 }
 
 // --
