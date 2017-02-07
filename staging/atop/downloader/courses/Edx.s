@@ -95,13 +95,29 @@ function _makePrepareHeadersForLogin()
 function _coursesListAct( )
 {
   var self = this;
-  var con = new wConsequence().give();
 
   _.assert( arguments.length === 0 );
 
-  con.thenDo( function()
+  return self._request( self.config.getUserCoursesUrl )
+  .thenDo( function( err, got )
   {
-    // self._coursesData = JSON.parse( data );
+
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    {
+      debugger;
+      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+    }
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    if( !self._courses )
+    self._courses = [];
+
+    self._coursesData = JSON.parse( got.body );
+
+    // logger.log( 'self._coursesData',_.toStr( self._coursesData,{ levels : 4 } ) );
 
     self._coursesData.forEach( function( courseData )
     {
@@ -116,11 +132,8 @@ function _coursesListAct( )
       self._courses.push( course );
     });
 
-    con.give( self._courses );
-
+    return self._courses;
   });
-
-  return con;
 }
 
 //
@@ -207,42 +220,25 @@ function _resourcesListRefineAct()
   if( !self._resources )
   self._resources = [];
 
-  self._resourcesData.forEach( function( data )
+  self._resourcesData.forEach( function( block )
   {
 
-    // if( data.type === 'chapter' )
+    // if( block.type === 'chapter' )
     {
       var resource = {};
-      resource.name = data.display_name;
-      resource.id  = data.block_id;
-      resource.dataUrl = data.student_view_url;
-      resource.pageUrl = data.lms_web_url;
-      resource.type = data.type;
-      //resource.elements = [];
-      resource.elements = data.children || [];
-      resource.raw =  data;
-      // currentBlock.elements.push( parseBlockChilds( data ) )
+      resource.name = block.display_name;
+      resource.id  = block.block_id;
+      // resource.url = block.student_view_url;
+      resource.type = block.type;
+      // resource.childs = [];
+      resource.raw =  block;
+      // currentBlock.childs.push( parseBlockChilds( block ) )
       self._resources.push( resource );
     }
 
   });
 
   return con;
-}
-
-// --
-// type
-// --
-
-var ResourceTypeMap =
-{
-  'discussion' : 'discussion',
-  'problem' : 'problem',
-  'html' : 'html',
-  'video' : 'video',
-  'vertical' : 'page',
-  'sequential' : 'pages',
-  'chapter' : 'chapter',
 }
 
 // --

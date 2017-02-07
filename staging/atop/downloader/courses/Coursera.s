@@ -80,7 +80,6 @@ function _makePrepareHeadersForLogin()
 function _coursesListAct()
 {
   var self = this;
-  var con = new wConsequence().give();
 
   _.assert( arguments.length === 0 );
 
