@@ -210,7 +210,7 @@ function _resourcesListRefineAct()
   self._resourcesData.forEach( function( block )
   {
 
-    if( block.type === 'chapter' )
+    // if( block.type === 'chapter' )
     {
       var resource = {};
       resource.name = block.display_name;

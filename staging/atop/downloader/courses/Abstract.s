@@ -118,7 +118,7 @@ function _download()
   .ifNoErrorThen( self._make )
   .ifNoErrorThen( self._login )
   .ifNoErrorThen( self._coursesList )
-  .ifNoErrorThen( self._coursePickEither,[ 'Interactive Computer Graphics',0 ] )
+  .ifNoErrorThen( self._coursePickEither,[ 'Introduction to Differential Equations','Interactive Computer Graphics',0 ] )
   .ifNoErrorThen( self._resourcesList )
   ;
 
@@ -625,6 +625,8 @@ function _resourcesList()
       logger.log( 'Resources :' );
       logger.log( _.toStr( self._resources, { levels : 2 } ) );
       logger.log( 'Resources.' );
+
+      logger.log( '*.type',_.entitySelectUnique( self._resources,'*.type' ) );
 
       if( self.verbosity )
       logger.topicDown( 'Listing of resources .. ' + ( err ? 'failed' : 'done' ) + '.' );
