@@ -709,7 +709,7 @@ function logElementsOf( name,elements )
 {
 
   logger.log( _.entityLength( elements ),name,':' );
-  logger.log( _.toStr( elements, { levels : 2 } ) );
+  logger.log( _.toStr( elements, { levels : 4 } ) );
   logger.log( _.entityLength( elements ),name + '.' );
 
 }
@@ -776,7 +776,8 @@ var Resource = _.like()
 ({
   name : null,
   id : null,
-  url : null,
+  dataUrl : null,
+  pageUrl : null,
   type : null,
   elements : null,
   bottom : null,

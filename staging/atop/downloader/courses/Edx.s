@@ -215,7 +215,8 @@ function _resourcesListRefineAct()
       var resource = {};
       resource.name = data.display_name;
       resource.id  = data.block_id;
-      resource.url = data.student_view_url;
+      resource.dataUrl = data.student_view_url;
+      resource.pageUrl = data.lms_web_url;
       resource.type = data.type;
       //resource.elements = [];
       resource.elements = data.children || [];
@@ -238,7 +239,10 @@ var ResourceTypeMap =
   'discussion' : 'discussion',
   'problem' : 'problem',
   'html' : 'html',
-  'vertical' : 'html',
+  'video' : 'video',
+  'vertical' : 'page',
+  'sequential' : 'pages',
+  'chapter' : 'chapter',
 }
 
 // --
