@@ -118,7 +118,7 @@ function _download()
   .ifNoErrorThen( self._make )
   .ifNoErrorThen( self._login )
   .ifNoErrorThen( self._coursesList )
-  .ifNoErrorThen( self._coursePick,[ 0 ] )
+  .ifNoErrorThen( self._coursePickEither,[ 'Interactive Computer Graphics',0 ] )
   .ifNoErrorThen( self._resourcesList )
   ;
 
@@ -370,7 +370,7 @@ function _coursesList()
     if( self.verbosity )
     if( !err )
     {
-      var log = _.toStr( got,{ levels : 3 } );
+      var log = _.toStr( got,{ levels : 2, wrap : 1 } );
       logger.log( 'courses :' );
       logger.log( log );
       logger.log( 'courses.' );
@@ -446,18 +446,68 @@ function _coursePick( src )
   src = 0;
 
   _.assert( arguments.length <= 1 );
-  _.assert( _.numberIs( src ) );
+
+  if( !self._coursePickAct( src ) )
+  throw _.err( 'Failed pick course',src );
+
+  return new wConsequence().give();
+}
+
+//
+
+function _coursePickAct( src )
+{
+  var self = this;
+
+  _.assert( arguments.length <= 1 );
+  _.assert( _.numberIs( src ) || _.strIs( src ) || _.objectIs( src ) );
+
+  if( _.strIs( src ) )
+  return self._coursePickAct({ name : src });
 
   if( _.atomicIs( src ) )
   self.currentCourse = self._courses[ src ];
   else
-  self.currentCourse = self.course( src );
+  self.currentCourse = self.course( src )[ 0 ];
 
   if( !self.currentCourse )
-  throw _.err( 'Failed pick course',src );
+  return false;
 
   if( self.verbosity )
   logger.log( 'Picked course',self.currentCourse.name );
+
+  return true;
+}
+
+//
+
+function coursePickEither()
+{
+  var self = this;
+
+  self._sync
+  .thenDo( function()
+  {
+    return self._coursePickEither.apply( self,arguments );
+  });
+
+  return self;
+}
+
+//
+
+function _coursePickEither()
+{
+  var self = this;
+
+  for( var a = 0 ; a < arguments.length ; a++ )
+  {
+    if( self._coursePickAct( arguments[ a ] ) )
+    break;
+  }
+
+  if( a === arguments.length )
+  throw _.err( 'Cant pick none course :',_.arraySlice( arguments ).join( "," ) );
 
   return new wConsequence().give();
 }
@@ -827,6 +877,10 @@ var Proto =
   course : course,
   coursePick : coursePick,
   _coursePick : _coursePick,
+  _coursePickAct : _coursePickAct,
+
+  coursePickEither : coursePickEither,
+  _coursePickEither : _coursePickEither,
 
   // courseDownload : courseDownload,
   // _courseDownload : _courseDownload,
