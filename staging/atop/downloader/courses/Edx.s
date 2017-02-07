@@ -95,13 +95,29 @@ function _makePrepareHeadersForLogin()
 function _coursesListAct( )
 {
   var self = this;
-  var con = new wConsequence().give();
 
   _.assert( arguments.length === 0 );
 
-  con.thenDo( function()
+  return self._request( self.config.getUserCoursesUrl )
+  .thenDo( function( err, got )
   {
-    // self._coursesData = JSON.parse( data );
+
+    if( !err )
+    if( got.response.statusCode !== 200 )
+    {
+      debugger;
+      err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+    }
+
+    if( err )
+    return con.error( _.err( err ) );
+
+    if( !self._courses )
+    self._courses = [];
+
+    self._coursesData = JSON.parse( got.body );
+
+    // logger.log( 'self._coursesData',_.toStr( self._coursesData,{ levels : 4 } ) );
 
     self._coursesData.forEach( function( courseData )
     {
@@ -116,11 +132,8 @@ function _coursesListAct( )
       self._courses.push( course );
     });
 
-    con.give( self._courses );
-
+    return self._courses;
   });
-
-  return con;
 }
 
 //
@@ -222,6 +235,7 @@ function _resourcesListRefineAct()
       resource.elements = data.children || [];
       resource.raw =  data;
       // currentBlock.elements.push( parseBlockChilds( data ) )
+
       self._resources.push( resource );
     }
 
