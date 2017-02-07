@@ -213,7 +213,7 @@ function _resourcesListRefineAct()
 
     if( element.description )
     {
-      resource.kind = 'week';
+      resource.kind = self.ResourceKindMapper.valueFor( 'week' );
       ++weekCounter;
       var urlOptions =
       {
@@ -228,7 +228,7 @@ function _resourcesListRefineAct()
 
     if( element.content )
     {
-      resource.kind = element.content.typeName;
+      resource.kind = self.ResourceKindMapper.valueFor( element.content.typeName );
 
       var urlOptions =
       {
@@ -236,10 +236,15 @@ function _resourcesListRefineAct()
         dictionary:
         {
           '{class_name}' : self.currentCourse.raw.slug,
-          '{type}' : resource.kind,
+          '{type}' : element.content.typeName,
           '{id}' : resource.id,
         }
       }
+
+      // if( resource.kind === 'video' )
+      // {
+      //
+      // }
     }
 
     if( urlOptions )
@@ -253,7 +258,7 @@ function _resourcesListRefineAct()
     if( element.elements )
     {
       if( !resource.kind )
-      resource.kind = 'module';
+      resource.kind = self.ResourceKindMapper.valueFor( 'section' );
 
       if( !resource.elements )
       resource.elements = [];
@@ -278,14 +283,14 @@ function _resourcesListRefineAct()
 
 //
 
-function getVideoUrl( videoId, resolution )
+function _resourceVideoUrlGet( videoId, resolution )
 {
   var self = this;
   var getUrl = _.strReplaceAll( self.config.getVideoApi,'{id}', videoId );
 
-  var con = new wConsequence();
+  // var con = new wConsequence();
 
-  self._request( getUrl )
+  return self._request( getUrl )
   .thenDo( function( err, got )
   {
     if( err )
@@ -295,7 +300,7 @@ function getVideoUrl( videoId, resolution )
     err = _.err( 'Failed to get resources list. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
 
     if( err )
-    return con.error( err );
+    throw _.errLogOnce( err );
 
     var data = JSON.parse( got.body );
 
@@ -304,14 +309,36 @@ function getVideoUrl( videoId, resolution )
       if( source.resolution == resolution )
       {
         var url = source.formatSources[ 'video/mp4' ];
-        return con.give( url );
+        return url;
       }
     })
 
   });
 
-  return con;
+  // return con;
 }
+
+//
+
+var ResourceKindMapper = wNameMapper
+({
+
+  /* terminal */
+
+  'discussion' : 'discussion',
+  'quiz' : 'problem',
+  'exam' : 'page',/*!!!cant set two same types*/
+  'supplement' : 'html',
+  'lecture' : 'video',
+
+  /* non-terminal */
+
+  // 'vertical' : 'page',
+  'section' : 'section',
+  'week' : 'chapter',
+  'course' : 'course',
+
+});
 
 // --
 // relationships
@@ -336,6 +363,7 @@ var Restricts =
 
 var Statics =
 {
+  ResourceKindMapper : ResourceKindMapper
 }
 
 // --
@@ -359,7 +387,7 @@ var Proto =
   _resourcesListAct : _resourcesListAct,
   _resourcesListRefineAct : _resourcesListRefineAct,
 
-  getVideoUrl : getVideoUrl,
+  _resourceVideoUrlGet : _resourceVideoUrlGet,
 
 
   // relationships
