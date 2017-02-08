@@ -203,6 +203,8 @@ function _resourcesListRefineAct()
 
     resource.name = element.name;
     resource.id  = element.id;
+    resource.raw =  element;
+
 
     if( parent )
     {
@@ -241,17 +243,26 @@ function _resourcesListRefineAct()
         }
       }
 
-      // if( resource.kind === 'video' )
-      // {
-      //
-      // }
+      if( resource.kind === 'video' )
+      {
+        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet,[ element.content.definition.videoId,'720p' ] ) );
+      }
+      if( resource.kind === 'html' )
+      {
+        con.thenDo( _.routineSeal( self,self._resourceHtmlGet,[ element.id ] ) );
+      }
+
+      con.thenDo( function ( err, got )
+      {
+        if( resource.kind === 'html' )
+        resource.raw.data = got;
+        else
+        resource.dataUrl = got;
+      });
     }
 
     if( urlOptions )
     resource.pageUrl = _.strReplaceAll( urlOptions );
-
-
-    resource.raw =  element;
 
     self._resources.push( resource );
 
@@ -283,12 +294,16 @@ function _resourcesListRefineAct()
 
 //
 
-function _resourceVideoUrlGet( videoId, resolution )
+function _resourceVideoUrlGet( videoId, resolution,format )
 {
   var self = this;
   var getUrl = _.strReplaceAll( self.config.getVideoApi,'{id}', videoId );
 
-  // var con = new wConsequence();
+  if( format === undefined )
+  format = 'mp4';
+
+  if( resolution === undefined )
+  resolution = '720p';
 
   return self._request( getUrl )
   .thenDo( function( err, got )
@@ -297,25 +312,59 @@ function _resourceVideoUrlGet( videoId, resolution )
     err = _.err( err );
 
     if( got.response.statusCode !== 200 )
-    err = _.err( 'Failed to get resources list. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+    err = _.err( 'Failed to get video url. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
 
     if( err )
     throw _.errLogOnce( err );
 
     var data = JSON.parse( got.body );
+    var result = _.entitySearch({ src : data.sources, ins : resolution });
+    var keys = Object.keys( result );
 
-    data.sources.forEach( function( source )
+    if( format === 'mp4' )
+    format = keys[ 1 ];
+
+    if( format === 'webm' )
+    format = keys[ 2 ];
+
+    return result[ format ];
+  });
+}
+
+//
+
+function _resourceHtmlGet( id )
+{
+  var self = this;
+  var urlOptions =
+  {
+    dst : self.config.getSupplementUrl,
+    dictionary:
     {
-      if( source.resolution == resolution )
-      {
-        var url = source.formatSources[ 'video/mp4' ];
-        return url;
-      }
-    })
+      '{course_id}' : self.currentCourse.raw.id,
+      '{element_id}' : id,
+    }
+  }
+  var getUrl = _.strReplaceAll( urlOptions );
+
+  return self._request( getUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resource data. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+
+    if( err )
+    throw _.errLogOnce( err );
+
+    var data = JSON.parse( got.body );
+    var result = _.entitySearch({ src : data, ins : 'value', searchingValue : 0, searchingSubstring : 0 });
+    var keys = Object.keys( result );
+    return result[ keys[ 0 ] ];
 
   });
-
-  // return con;
 }
 
 //
@@ -388,6 +437,7 @@ var Proto =
   _resourcesListRefineAct : _resourcesListRefineAct,
 
   _resourceVideoUrlGet : _resourceVideoUrlGet,
+  _resourceHtmlGet : _resourceHtmlGet,
 
 
   // relationships

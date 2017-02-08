@@ -690,7 +690,7 @@ function logElementsOf( name,elements )
 {
 
   logger.log( _.entityLength( elements ),name,':' );
-  logger.log( _.toStr( elements, { levels : 4 } ) );
+  logger.log( _.toStr( elements, { levels : 3 } ) );
   logger.log( _.entityLength( elements ),name + '.' );
 
 }
