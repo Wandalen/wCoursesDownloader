@@ -40,6 +40,8 @@ module.exports =
     weekUrl : 'https://www.coursera.org/learn/{class_name}/home/week/{weekCounter}',
     resourcePageUrl : 'https://www.coursera.org/learn/{class_name}/{type}/{id}',
     getSupplementUrl : 'https://www.coursera.org/api/onDemandSupplements.v1/{course_id}~{element_id}?includes=asset',
+    getAssetIdUrl : 'https://www.coursera.org/api/openCourseAssets.v1/{id}',
+    getAssetsUrl : 'https://www.coursera.org/api/assetUrls.v1?ids={ids}',
 
     email : 'wcoursera@gmail.com',
     password : '17159922',
