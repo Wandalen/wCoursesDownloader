@@ -245,7 +245,7 @@ function _resourcesListRefineAct()
 
       if( resource.kind === 'video' )
       {
-        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet,[ element.content.definition.videoId,'720p' ] ) );
+        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet,[ element.id ] ) );
       }
       if( resource.kind === 'html' )
       {
@@ -294,16 +294,26 @@ function _resourcesListRefineAct()
 
 //
 
-function _resourceVideoUrlGet( videoId, resolution,format )
+function _resourceVideoUrlGet( o )
 {
   var self = this;
-  var getUrl = _.strReplaceAll( self.config.getVideoApi,'{id}', videoId );
 
-  if( format === undefined )
-  format = 'mp4';
+  if( _.strIs( o ) )
+  o = { id : o };
 
-  if( resolution === undefined )
-  resolution = '720p';
+  _.routineOptions( _resourceVideoUrlGet,o );
+
+  var urlOptions =
+  {
+    dst : self.config.getVideoApi,
+    dictionary:
+    {
+      '{course_id}' : self.currentCourse.raw.id,
+      '{element_id}' : o.id,
+    }
+  }
+
+  var getUrl = _.strReplaceAll( urlOptions );
 
   return self._request( getUrl )
   .thenDo( function( err, got )
@@ -318,17 +328,58 @@ function _resourceVideoUrlGet( videoId, resolution,format )
     throw _.errLogOnce( err );
 
     var data = JSON.parse( got.body );
-    var result = _.entitySearch({ src : data.sources, ins : resolution });
-    var keys = Object.keys( result );
 
-    if( format === 'mp4' )
-    format = keys[ 1 ];
+    /*video*/
+    var video = _.entitySearch({ src : data, ins : 'byResolution'});
+    var videoKeys = Object.keys( video );
 
-    if( format === 'webm' )
-    format = keys[ 2 ];
+    video = video[ videoKeys[ 0 ] ];
 
-    return result[ format ];
+    var resolutions = Object.keys( video );
+
+    if( resolutions.indexOf( o.resolution ) === -1 )
+    throw _.err( 'Unavailable video resolution: ', o.resolution, ',available are:', resolutions );
+
+    var formats = Object.keys( video[ o.resolution ] );
+
+    if( formats.indexOf( o.format + 'VideoUrl' ) === -1 )
+    throw _.err( 'Unavailable video format: ', o.format );
+
+    var videoUrl = video[ o.resolution ][ o.format + 'VideoUrl' ];
+
+    /*subtitles*/
+    if( !o.videoOnly )
+    {
+      var sub = _.entitySearch({ src : data, ins : 'subtitles' });
+      var subKeys = Object.keys( sub );
+
+      sub = sub[ subKeys[ 0 ] ];
+
+      var subtitlesLangs = Object.keys( sub );
+
+      if( subtitlesLangs.indexOf( o.subtitles ) === -1 )
+      throw _.err( 'Unavailable subtitles language: ', o.subtitles, ',available are:', subtitlesLangs );
+
+      var subUrl = self.config.site + sub[ o.subtitles ];
+    }
+
+    if( o.videoOnly )
+    {
+      return videoUrl;
+    }
+
+    return { videoUrl : videoUrl, subUrl  : subUrl };
   });
+}
+
+_resourceVideoUrlGet.defaults =
+{
+  id : null,
+  resolution : '720p',
+  format : 'mp4',
+  subtitles : 'en',
+
+  videoOnly : true
 }
 
 //
