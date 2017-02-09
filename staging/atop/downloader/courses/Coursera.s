@@ -257,7 +257,7 @@ function _resourcesListRefineAct()
         con.thenDo( _.routineSeal( self,self._resourceAssetUrlGet,[ element,resource ] ) );
       }
 
-      if( resource.kind === 'html' )
+      if( resource.kind === 'hypertext' )
       {
         con.thenDo( _.routineSeal( self,self._resourceHtmlGet,[ element ] ) );
       }
@@ -324,8 +324,6 @@ function _resourceVideoUrlGet( o )
   return self._request( getUrl )
   .thenDo( function( err, got )
   {
-    if( err )
-    err = _.err( err );
 
     if( got.response.statusCode !== 200 )
     err = _.err( 'Failed to get video url. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
@@ -554,7 +552,7 @@ var ResourceKindMapper = wNameMapper
   'exam' : 'discussion',
   'quiz' : 'problem',
   'downloadable' : 'downloadable',
-  'supplement' : 'html',
+  'supplement' : 'hypertext',
   'lecture' : 'page',
   'video' : 'video',
 
