@@ -158,6 +158,93 @@ Reply:
 }
 ```
 
+#### Video
+Possible resolutions: 720p,360p,540p
+
+Formats: mp4,webm
+
+#### Subtitles
+Languages:
+all Coursera videos have subtitles in the primary language of the course. Some course videos also have translated subtitles.
+In server response subtitles are placed in object `subtitles` with language shortcut as key and data url as value.
+
+Example:
+```
+{
+  "en":"some url"
+}
+```
+Formats:
+* txt - Transcript file for readonly
+```
+"subtitlesTxt":{
+  "en":"some url"
+}
+```
+* vtt - [WebVTT](https://w3c.github.io/webvtt/)
+```
+"subtitlesVtt":{
+  "en":"some url"
+}
+```
+* srt - [SRT Subtitles](https://matroska.org/technical/specs/subtitles/srt.html)
+By default srt subtitles are located in `subtitles` property.
+```
+"subtitles":{
+  "en":"some url"
+}
+```
+
+
+#### How get video urls with subtitles:
+```
+'https://www.coursera.org/api/onDemandLectureVideos.v1/{course_id}~{element_id}?includes=video&fields=onDemandVideos.v1(sources%2Csubtitles%2CsubtitlesVtt%2CsubtitlesTxt)
+```
+
+Request parameters:
+* `course_id` - course id from list of courses.
+
+* `element_id` - id of element with `typeName` - lecture.
+
+Part of reply:
+```
+"onDemandVideos.v1":[
+      {
+        "subtitles":{
+          "en":"some url"
+        },
+        "sources":{
+          "playlists":{
+            "hls":"some url"
+          },
+          "byResolution":{
+            "720p":{
+              "webMVideoUrl": "some url",
+              "mp4VideoUrl" : "some url",
+              "previewImageUrl" : "some url"
+            },
+            "360p":{
+              "webMVideoUrl": "some url",
+              "mp4VideoUrl" : "some url",
+              "previewImageUrl" : "some url"
+            },
+            "540p":{
+              "webMVideoUrl": "some url",
+              "mp4VideoUrl" : "some url",
+              "previewImageUrl" : "some url"
+            }
+          }
+        },
+        "subtitlesTxt":{
+          "en":"some url"
+        },
+        "subtitlesVtt":{
+          "en":"some url"
+        },
+      }
+    ]
+```
+
 #### How get video info using video_id finded in response for course materials:
 ```
 https://www.coursera.org/api/opencourse.v1/video/{video_id}
@@ -179,8 +266,9 @@ Reply:
 
 #### How get Assets:
 
-Asset id can be found in `courseMaterial` property [see here](#get-course-materials-class_name-is-equal-to-slug)
-For "typeName": "generic":
+Asset id can be found in `courseMaterial` property [see here.](#get-course-materials-class_name-is-equal-to-slug)
+
+For `typeName`: "generic":
 
 `https://www.coursera.org/api/assets.v1?ids={id}`
 
@@ -205,7 +293,7 @@ Reply:
   ],
 }
 ```
-For typeName : "supplement":
+For `typeName` : "supplement" #1:
 
 `https://www.coursera.org/api/openCourseAssets.v1/{assetId}`
 
@@ -229,5 +317,70 @@ Reply:
   ],
 }
 ```
+
+For `typename` : 'lecture':
+* Take each id from `content->definition->assets`
+Example:
+```
+"content" :
+{
+  "typeName" : "lecture",
+  "definition" : { ... "assets" : [ 'giAxucdaEeWJTQ5WTi8YJQ@1',... ] }
+}
+```
+
+All symbols before `@1` will be our id:
+`giAxucdaEeWJTQ5WTi8YJQ`
+
+* Get assetId using id from previous step:
+
+API: `https://www.coursera.org/api/openCourseAssets.v1/{id}`
+
+Example : `https://www.coursera.org/api/openCourseAssets.v1/giAxucdaEeWJTQ5WTi8YJQ`
+
+Response:
+```
+{
+  "elements":[
+    {
+      "typeName":"asset",
+      "definition":{
+        "assetId":"Vq8hwsdaEeWGlA7xclFASw",
+        "name":""
+      },
+      "id":"giAxucdaEeWJTQ5WTi8YJQ"
+    }
+  ]
+}
+```
+
+* Get assets urls:
+
+API: `https://www.coursera.org/api/assetUrls.v1?ids={ids}`
+
+Request parameters:
+
+* `ids` - list of assetId's from previous step separated by ','
+
+Example: `https://www.coursera.org/api/assetUrls.v1?ids=Vq8hwsdaEeWGlA7xclFASw,QIEA6KV5EeWXJQ4LAiyuNw`
+
+Reply:
+```
+{
+  "elements":[
+    {
+      "expires":1486771200000,
+      "id":"Vq8hwsdaEeWGlA7xclFASw",
+      "url":"url_here"
+    },
+    {
+      "expires":1486771200000,
+      "id":"QIEA6KV5EeWXJQ4LAiyuNw",
+      "url":"url_here"
+    }
+  ]
+}
+```
+
 
 <!-- https://www.coursera.org/api/courses.v1?fields=display%2CpartnerIds%2CphotoUrl%2CstartDate%2Cpartners.v1(homeLink%2Cname)&includes=partnerIds&q=watchlist&start=0 -->
