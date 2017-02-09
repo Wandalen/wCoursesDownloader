@@ -255,7 +255,7 @@ var ResourceKindMapper = wNameMapper
 
   'discussion' : 'discussion',
   'problem' : 'problem',
-  'html' : 'html',
+  'html' : 'hypertext',
   'video' : 'video',
 
   /* non-terminal */
