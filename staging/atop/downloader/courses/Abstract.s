@@ -119,7 +119,7 @@ function _download()
   .ifNoErrorThen( self._make )
   .ifNoErrorThen( self._login )
   .ifNoErrorThen( self._coursesList )
-  .ifNoErrorThen( self._coursePickEither,[ 'Introduction to Differential Equations','Interactive Computer Graphics',0 ] )
+  .ifNoErrorThen( self._coursePickEither,[ 'Introduction to Differential Equations','Теория игр (Game Theory)',0 ] )
   .ifNoErrorThen( self._resourcesList )
   ;
 
@@ -690,7 +690,7 @@ function logElementsOf( name,elements )
 {
 
   logger.log( _.entityLength( elements ),name,':' );
-  logger.log( _.toStr( elements, { levels : 4 } ) );
+  logger.log( _.toStr( elements, { levels : 3 } ) );
   logger.log( _.entityLength( elements ),name + '.' );
 
 }
@@ -742,7 +742,7 @@ function registerClass()
 var ResourceKindArray =
 [
   /* terminal */
-  'discussion','problem','html','video',
+  'discussion','problem','html','video','downloadable',
   /* non-terminal */
   'page', 'section', 'chapter','course',
 ];

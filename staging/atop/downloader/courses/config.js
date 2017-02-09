@@ -30,14 +30,18 @@ module.exports =
     https://github.com/coursera-dl/coursera-dl/blob/master/coursera/define.py
     */
     name : 'Coursera',
+    site : 'https://www.coursera.org/',
 
     getUserCoursesUrl : 'https://www.coursera.org/api/memberships.v1?fields=courseId,enrolledTimestamp,grade,id,lastAccessedTimestamp,onDemandSessionMembershipIds,onDemandSessionMemberships,role,v1SessionId,vc,vcMembershipId,courses.v1(courseStatus,display,partnerIds,photoUrl,specializations,startDate,v1Details,v2Details),partners.v1(homeLink,name),v1Details.v1(sessionIds),v1Sessions.v1(active,certificatesReleased,dbEndDate,durationString,hasSigTrack,startDay,startMonth,startYear),v2Details.v1(onDemandSessions,plannedLaunchDate,sessionsEnabledAt),specializations.v1(logo,name,partnerIds,shortName)&includes=courseId,onDemandSessionMemberships,vcMembershipId,courses.v1(partnerIds,specializations,v1Details,v2Details),v1Details.v1(sessionIds),v2Details.v1(onDemandSessions),specializations.v1(partnerIds)&q=me&showHidden=true&filter=current,preEnrolled',
     loginApiUrl :'https://www.coursera.org/api/login/v3',
     courseMaterials: 'https://www.coursera.org/api/opencourse.v1/course/{class_name}?showLockedItems=true',
-    getVideoApi : 'https://www.coursera.org/api/opencourse.v1/video/{id}',
+    getVideoApi : 'https://www.coursera.org/api/onDemandLectureVideos.v1/{course_id}~{element_id}?includes=video&fields=onDemandVideos.v1(sources%2Csubtitles%2CsubtitlesVtt%2CsubtitlesTxt)',
     courseUrl : 'https://www.coursera.org/learn/{class_name}',
     weekUrl : 'https://www.coursera.org/learn/{class_name}/home/week/{weekCounter}',
     resourcePageUrl : 'https://www.coursera.org/learn/{class_name}/{type}/{id}',
+    getSupplementUrl : 'https://www.coursera.org/api/onDemandSupplements.v1/{course_id}~{element_id}?includes=asset',
+    getAssetIdUrl : 'https://www.coursera.org/api/openCourseAssets.v1/{id}',
+    getAssetsUrl : 'https://www.coursera.org/api/assetUrls.v1?ids={ids}',
 
     email : 'wcoursera@gmail.com',
     password : '17159922',

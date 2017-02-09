@@ -197,23 +197,25 @@ function _resourcesListRefineAct()
 
   var weekCounter = 0;
 
+
   function _makeList( element,parent )
   {
     var resource = {};
-
     resource.name = element.name;
     resource.id  = element.id;
+    resource.raw =  element;
 
-    if( parent )
+    if( parent  && element.elements )
     {
-      resource.path = 'Week ' + weekCounter + '/' + parent.name;
+      // resource.path = 'Week ' + weekCounter + '/' + parent.name;
 
-      parent.elements.push( resource.id )
+      resource.kind = self.ResourceKindMapper.valueFor( 'section' );
+      parent.elements.push( resource.id );
     }
 
     if( element.description )
     {
-      resource.kind = 'week';
+      resource.kind = self.ResourceKindMapper.valueFor( 'week' );
       ++weekCounter;
       var urlOptions =
       {
@@ -228,35 +230,50 @@ function _resourcesListRefineAct()
 
     if( element.content )
     {
-      resource.kind = element.content.typeName;
+      resource.kind = self.ResourceKindMapper.valueFor( element.content.typeName );
 
-      var urlOptions =
+      // var urlOptions =
+      // {
+      //   dst : self.config.resourcePageUrl,
+      //   dictionary:
+      //   {
+      //     '{class_name}' : self.currentCourse.raw.slug,
+      //     '{type}' : element.content.typeName,
+      //     '{id}' : resource.id,
+      //   }
+      // }
+
+      if( resource.kind === 'page' )
       {
-        dst : self.config.resourcePageUrl,
-        dictionary:
-        {
-          '{class_name}' : self.currentCourse.raw.slug,
-          '{type}' : resource.kind,
-          '{id}' : resource.id,
-        }
+        if( !resource.elements )
+        resource.elements = [];
+
+        self._resources.push( resource );
+
+        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet,[ element,resource ] ) );
+
+        var assets = element.content.definition.assets;
+        if( assets.length )
+        con.thenDo( _.routineSeal( self,self._resourceAssetUrlGet,[ element,resource ] ) );
+      }
+
+      if( resource.kind === 'html' )
+      {
+        con.thenDo( _.routineSeal( self,self._resourceHtmlGet,[ element ] ) );
       }
     }
 
-    if( urlOptions )
-    resource.pageUrl = _.strReplaceAll( urlOptions );
+    // if( urlOptions )
+    // resource.pageUrl = _.strReplaceAll( urlOptions );
 
 
-    resource.raw =  element;
-
-    self._resources.push( resource );
 
     if( element.elements )
     {
-      if( !resource.kind )
-      resource.kind = 'module';
-
       if( !resource.elements )
       resource.elements = [];
+
+      self._resources.push( resource );
 
       element.elements.forEach( function ( element )
       {
@@ -278,40 +295,277 @@ function _resourcesListRefineAct()
 
 //
 
-function getVideoUrl( videoId, resolution )
+function _resourceVideoUrlGet( o )
 {
   var self = this;
-  var getUrl = _.strReplaceAll( self.config.getVideoApi,'{id}', videoId );
 
-  var con = new wConsequence();
+  if( arguments.length === 1 )
+  o = { element : o };
 
-  self._request( getUrl )
+  if( arguments.length === 2 )
+  {
+    o = { element : arguments[ 0 ], parent : arguments[ 1 ] };
+  }
+
+  _.routineOptions( _resourceVideoUrlGet,o );
+
+  var urlOptions =
+  {
+    dst : self.config.getVideoApi,
+    dictionary:
+    {
+      '{course_id}' : self.currentCourse.raw.id,
+      '{element_id}' : o.element.id,
+    }
+  }
+
+  var getUrl = _.strReplaceAll( urlOptions );
+
+  return self._request( getUrl )
   .thenDo( function( err, got )
   {
     if( err )
     err = _.err( err );
 
     if( got.response.statusCode !== 200 )
-    err = _.err( 'Failed to get resources list. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+    err = _.err( 'Failed to get video url. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
 
     if( err )
-    return con.error( err );
+    throw _.errLogOnce( err );
 
     var data = JSON.parse( got.body );
 
-    data.sources.forEach( function( source )
-    {
-      if( source.resolution == resolution )
-      {
-        var url = source.formatSources[ 'video/mp4' ];
-        return con.give( url );
-      }
-    })
+    /*video*/
+    var video = _.entitySearch({ src : data, ins : 'byResolution'});
+    var videoKeys = Object.keys( video );
 
+    video = video[ videoKeys[ 0 ] ];
+
+    var resolutions = Object.keys( video );
+
+    if( resolutions.indexOf( o.resolution ) === -1 )
+    throw _.err( 'Unavailable video resolution: ', o.resolution, ',available are:', resolutions );
+
+    var formats = Object.keys( video[ o.resolution ] );
+
+    if( formats.indexOf( o.format + 'VideoUrl' ) === -1 )
+    throw _.err( 'Unavailable video format: ', o.format );
+
+    var videoUrl = video[ o.resolution ][ o.format + 'VideoUrl' ];
+
+    /*subtitles*/
+    if( !o.videoOnly )
+    {
+      var sub = _.entitySearch({ src : data, ins : 'subtitles' });
+      var subKeys = Object.keys( sub );
+
+      sub = sub[ subKeys[ 0 ] ];
+
+      var subtitlesLangs = Object.keys( sub );
+
+      if( subtitlesLangs.indexOf( o.subtitles ) === -1 )
+      throw _.err( 'Unavailable subtitles language: ', o.subtitles, ',available are:', subtitlesLangs );
+
+      var subUrl = self.config.site + sub[ o.subtitles ];
+    }
+
+
+    var resource = {};
+    resource.name = o.element.name;
+    resource.id  = o.element.content.definition.videoId;
+    resource.kind = self.ResourceKindMapper.valueFor( 'video' );
+    resource.dataUrl = videoUrl;
+    resource.raw =  data;
+
+    self._resources.push( resource );
+    o.parent.elements.push( resource.id );
+
+    if( !o.videoOnly )
+    {
+      var resource = {};
+      resource.name = '[subtitles] ' + o.element.name;
+      resource.id  = o.element.content.definition.videoId;
+      resource.kind = self.ResourceKindMapper.valueFor( 'downloadable' );
+      resource.dataUrl = subUrl;
+      resource.raw =  data;
+
+      self._resources.push( resource );
+    }
+
+    return self._resources;
+  });
+}
+
+_resourceVideoUrlGet.defaults =
+{
+  element : null,
+  parent : null,
+  resolution : '720p',
+  format : 'mp4',
+  subtitles : 'en',
+
+  videoOnly : true
+}
+
+//
+
+function _resourceHtmlGet( element )
+{
+  var self = this;
+  var urlOptions =
+  {
+    dst : self.config.getSupplementUrl,
+    dictionary:
+    {
+      '{course_id}' : self.currentCourse.raw.id,
+      '{element_id}' : element.id,
+    }
+  }
+  var getUrl = _.strReplaceAll( urlOptions );
+
+  return self._request( getUrl )
+  .thenDo( function( err, got )
+  {
+    if( err )
+    err = _.err( err );
+
+    if( got.response.statusCode !== 200 )
+    err = _.err( 'Failed to get resource data. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+
+    if( err )
+    throw _.errLogOnce( err );
+
+    var data = JSON.parse( got.body );
+    var result = _.entitySearch({ src : data, ins : 'value', searchingValue : 0, searchingSubstring : 0 });
+    var keys = Object.keys( result );
+
+    var resource = {};
+    resource.name = element.name;
+    resource.id  = element.id;
+    resource.kind = self.ResourceKindMapper.valueFor( 'supplement' );
+    resource.raw =  element;
+    resource.raw.data =  result[ keys[ 0 ] ];
+
+    self._resources.push( resource );
+
+    return self._resources;
+
+  });
+}
+
+//
+
+function _resourceAssetUrlGet( element, parent )
+{
+  var self = this;
+  var con = new wConsequence().give();
+
+
+  var assets = element.content.definition.assets;
+
+  var ids = [];
+  var getUrl;
+
+  assets.forEach( function( asset )
+  {
+    var id = asset.substr( 0, asset.lastIndexOf('@') );
+    getUrl = _.strReplaceAll( self.config.getAssetIdUrl, '{id}', id );
+
+    con.thenDo( _.routineSeal( self,self._request,[ getUrl ] ) )
+    .thenDo( function( err, got )
+    {
+      if( err )
+      err = _.err( err );
+
+      if( got.response.statusCode !== 200 )
+      err = _.err( 'Failed to get resource data. StatusCode: ', got.response.statusCode, 'Server response: ', got.body );
+
+      if( err )
+      throw _.errLogOnce( err );
+
+      var data = JSON.parse( got.body );
+      var result = _.entitySearch({ src : data, ins : 'assetId', searchingValue : 0, searchingSubstring : 0 });
+      var keys = Object.keys( result );
+      return result[ keys[ 0 ] ];
+    })
+    .thenDo( function( err, got )
+    {
+      ids.push( got );
+      if( ids.length === assets.length )
+      {
+        return ids;
+      }
+    });
+
+  });
+
+  var resources = [];
+
+  con.thenDo( function( err, got )
+  {
+    var getUrl = _.strReplaceAll( self.config.getAssetsUrl, '{ids}', ids.join( ',' ) );
+
+    return self._request( getUrl )
+    .thenDo( function( err, got )
+    {
+      if( !err )
+      if( got.response.statusCode !== 200 )
+      {
+        debugger;
+        err = _.err( 'Failed to get resources list. StatusCode : ', got.response.statusCode, 'Server response : ', got.body );
+      }
+
+      if( err )
+      return con.error( _.err( err ) );
+
+      var data = JSON.parse( got.body );
+      var counter = 0;
+      data.elements.forEach( function( asset )
+      {
+        var resource = {};
+        resource.name = element.name;
+        resource.id  = asset.id;
+        resource.kind = self.ResourceKindMapper.valueFor( 'downloadable' );
+        resource.dataUrl = asset.url;
+        resource.raw =  asset;
+
+        self._resources.push( resource );
+        parent.elements.push( resource.id );
+        ++counter;
+
+        if( counter === data.elements.length )
+        {
+          return self._resources;
+        }
+      })
+    });
   });
 
   return con;
 }
+
+//
+
+var ResourceKindMapper = wNameMapper
+({
+
+  /* terminal */
+
+  'exam' : 'discussion',
+  'quiz' : 'problem',
+  'downloadable' : 'downloadable',
+  'supplement' : 'html',
+  'lecture' : 'page',
+  'video' : 'video',
+
+  /* non-terminal */
+
+  // 'vertical' : 'page',
+  'section' : 'section',
+  'week' : 'chapter',
+  'course' : 'course',
+
+});
 
 // --
 // relationships
@@ -336,6 +590,7 @@ var Restricts =
 
 var Statics =
 {
+  ResourceKindMapper : ResourceKindMapper
 }
 
 // --
@@ -359,7 +614,9 @@ var Proto =
   _resourcesListAct : _resourcesListAct,
   _resourcesListRefineAct : _resourcesListRefineAct,
 
-  getVideoUrl : getVideoUrl,
+  _resourceVideoUrlGet : _resourceVideoUrlGet,
+  _resourceHtmlGet : _resourceHtmlGet,
+  _resourceAssetUrlGet : _resourceAssetUrlGet,
 
 
   // relationships
