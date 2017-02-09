@@ -159,9 +159,11 @@ Reply:
 ```
 
 #### Video
-Possible resolutions: 720p,360p,540p
-
-Formats: mp4,webm
+Resolution | Supported formats |
+--- | --- |
+720p | mp4, webm
+360p | mp4, webm
+540p | mp4, webm
 
 #### Subtitles
 Languages:
