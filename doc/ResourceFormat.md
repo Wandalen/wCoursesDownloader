@@ -13,55 +13,66 @@ subtitlesFormatAllowed : [ 'txt','srt','vtt',null ]
 #### resourceFormatPreffered - list of resource formats preffered by user
 
 All items in list except `null` will be considered as resource formats selected by user.
-Usage of in this list `null` have several variants:
-* Empty list  - this resource will be skipped in download process.
+Usage of `null` in this list have several variants:
+* Empty list  - don't download resource at all.
 ```
+subtitlesFormatAllowed : does not matter
 subtitlesFormatPreffered : []
 ```
 * Single `null` in the list - try to select all available formats from `resourceFormatAllowed` or some new formats if nothing selected from `resourceFormatAllowed` list.
 ```
+subtitlesFormatAllowed : [ 'vtt','srt',null ]
 subtitlesFormatPreffered : [ null ]
 ```
-* List that have `null` anywhere in the list - if no one allowed format from `resourceFormatPreffered` is not available then don't throw error but try to choose some formats from rest of `resourceFormatAllowed`.
+* List that have `null` anywhere in the list - if no one allowed format from `resourceFormatPreffered` is available then don't throw error but try to choose some formats from rest of `resourceFormatAllowed`.
 ```
+subtitlesFormatAllowed : [ 'vtt','srt',null ]
 subtitlesFormatPreffered : [ 'txt',null ]
-subtitlesFormatPreffered : [ null,'vtt' ]
+```
+```
+subtitlesFormatAllowed : [ 'vtt','srt',null ]
+subtitlesFormatPreffered : [ null,'txt' ]
+```
+```
+subtitlesFormatAllowed : [ 'vtt','srt',null ]
 subtitlesFormatPreffered : [ null, null ]
 ```
 * List without `null` - try to select all preffered formats that are in allowed list and throw error if nothing is available.
 ```
-subtitlesFormatPreffered : [ 'txt','vtt' ]
+subtitlesFormatAllowed : [ 'vtt','srt' ]
+subtitlesFormatPreffered : [ 'txt' ]
 ```
 
-#### Example #1
+#### Example #1 Assume server provide only one format : '720p'
 ``` javascript
-
-// only one allowed format are avaible - '720p'
 var resourceFormatAllowed =  [ '720p', '540p' ];
 var resourceFormatPreffered = [ '720p','540p' ];
 var rf = _.ResourceFormat( { allowedName : resourceFormatAllowed, prefferedName : resourceFormatPreffered } );
 rf.make();
 //returns [ '720p' ]
-
-// all allowed formats are avaible
+```
+#### Example #2 Assume server provide all allowed formats
+``` javascript
 var resourceFormatAllowed =  [ '720p', '540p' ];
 var resourceFormatPreffered = [ '100p', null ];
 var rf = _.ResourceFormat( { allowedName : resourceFormatAllowed, prefferedName : resourceFormatPreffered } );
 rf.make();
 //returns [ '720p', '540p' ]
+```
 
-// not allowed format is preffered
+#### Example #3 Not allowed format is preffered
+``` javascript
 var resourceFormatAllowed =  [ '720p', '540p' ];
 var resourceFormatPreffered = [ '100p' ];
 var rf = _.ResourceFormat( { allowedName : resourceFormatAllowed, prefferedName : resourceFormatPreffered } );
 rf.make();
 //will throw error
-
-// '720p', '540p' not avaible but some new format exists - '1080p'
+```
+#### Example #4 Assume server provide only new format : '1080p'
+``` javascript
 var resourceFormatAllowed =  [ '720p', '540p', null ];
 var resourceFormatPreffered = [ '100p',null ];
 var rf = _.ResourceFormat( { allowedName : resourceFormatAllowed, prefferedName : resourceFormatPreffered } );
 rf.make();
 //return [ '1080p' ]
-
 ```
