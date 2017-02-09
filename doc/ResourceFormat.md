@@ -27,13 +27,13 @@ subtitlesFormatPreffered : [ null ]
 subtitlesFormatPreffered : [ 'txt',null ]
 subtitlesFormatPreffered : [ null,'vtt' ]
 subtitlesFormatPreffered : [ null, null ]
-
+```
 * List without `null` - try to select all preffered formats that are in allowed list and throw error if nothing is available.
 ```
 subtitlesFormatPreffered : [ 'txt','vtt' ]
 ```
 
-### Example #1
+#### Example #1
 ``` javascript
 
 // only one allowed format are avaible - '720p'
