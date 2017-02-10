@@ -248,7 +248,7 @@ function _resourcesListRefineAct()
 // type
 // --
 
-var ResourceKindMapper = wNameMapper
+var ResourceKindMapper = wNameMapper({ droppingDuplicate : 1 }).set
 ({
 
   /* terminal */

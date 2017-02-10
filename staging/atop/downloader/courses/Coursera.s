@@ -185,6 +185,40 @@ function _resourcesListAct()
 
 //
 
+function _resourcePageUrlGet( resource )
+{
+  var self = this;
+
+  if( resource.kind === self.ResourceKindMapper.valueFor( 'week' ) )
+  {
+    var urlOptions =
+    {
+      dst : self.config.weekUrl,
+      dictionary :
+      {
+        '{class_name}' : self.currentCourse.raw.slug,
+      }
+    }
+  }
+  else
+  {
+    var urlOptions =
+    {
+      dst : self.config.resourcePageUrl,
+      dictionary:
+      {
+        '{class_name}' : self.currentCourse.raw.slug,
+        '{type}' : resource.raw.content.typeName,
+        '{id}' : resource.id,
+      }
+    }
+  }
+
+  return  _.strReplaceAll( urlOptions );
+}
+
+//
+
 function _resourcesListRefineAct()
 {
   var self = this;
@@ -200,82 +234,61 @@ function _resourcesListRefineAct()
 
   function _makeList( element,parent )
   {
-    var resource = {};
-    resource.name = element.name;
-    resource.id  = element.id;
-    resource.raw =  element;
-
-    if( parent  && element.elements )
-    {
-      // resource.path = 'Week ' + weekCounter + '/' + parent.name;
-
-      resource.kind = self.ResourceKindMapper.valueFor( 'section' );
-      parent.elements.push( resource.id );
-    }
-
-    if( element.description )
-    {
-      resource.kind = self.ResourceKindMapper.valueFor( 'week' );
-      ++weekCounter;
-      var urlOptions =
-      {
-        dst : self.config.weekUrl,
-        dictionary :
-        {
-          '{class_name}' : self.currentCourse.raw.slug,
-          '{weekCounter}' : '' + weekCounter,
-        }
-      }
-    }
-
     if( element.content )
     {
-      resource.kind = self.ResourceKindMapper.valueFor( element.content.typeName );
+      var type = element.content.typeName;
+      var kind = self.ResourceKindMapper.valueFor( type );
 
-      // var urlOptions =
-      // {
-      //   dst : self.config.resourcePageUrl,
-      //   dictionary:
-      //   {
-      //     '{class_name}' : self.currentCourse.raw.slug,
-      //     '{type}' : element.content.typeName,
-      //     '{id}' : resource.id,
-      //   }
-      // }
+      var page = {};
+      page.name = element.name;
+      page.id  = element.id;
+      page.kind = kind;
+      page.raw =  element;
+      page.elements = [];
+      page.pageUrl = self._resourcePageUrlGet( page );
+      parent.elements.push( page.id );
+      self._resources.push( page );
 
-      if( resource.kind === 'page' )
+      if( type === 'lecture' )
       {
-        if( !resource.elements )
-        resource.elements = [];
-
-        self._resources.push( resource );
-
-        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet,[ element,resource ] ) );
+        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet, [ { element : element, parent : page, videoOnly : 0, subtitles : 'ru' } ] ) );
 
         var assets = element.content.definition.assets;
         if( assets.length )
-        con.thenDo( _.routineSeal( self,self._resourceAssetUrlGet,[ element,resource ] ) );
+        con.thenDo( _.routineSeal( self,self._resourceAssetUrlGet, [ element,page ] ) );
       }
 
-      if( resource.kind === 'hypertext' )
+      if( type === 'supplement' )
       {
-        con.thenDo( _.routineSeal( self,self._resourceHtmlGet,[ element ] ) );
+        con.thenDo( _.routineSeal( self,self._resourceHtmlGet,[ element,page ] ) );
       }
     }
 
-    // if( urlOptions )
-    // resource.pageUrl = _.strReplaceAll( urlOptions );
-
-
-
     if( element.elements )
     {
-      if( !resource.elements )
+      var resource = {};
+      resource.name = element.name;
+      resource.id  = element.id;
+      resource.raw =  element;
       resource.elements = [];
+
+      if( element.description )
+      {
+        resource.kind = self.ResourceKindMapper.valueFor( 'week' );
+        ++weekCounter;
+        resource.pageUrl = self._resourcePageUrlGet( resource ) + weekCounter;
+      }
+      else
+      {
+        resource.kind = self.ResourceKindMapper.valueFor( 'section' );
+        parent.elements.push( resource.id );
+      }
+
+
 
       self._resources.push( resource );
 
-      element.elements.forEach( function ( element )
+      element.elements.forEach( function( element )
       {
         _makeList( element, resource );
       });
@@ -298,9 +311,6 @@ function _resourcesListRefineAct()
 function _resourceVideoUrlGet( o )
 {
   var self = this;
-
-  if( arguments.length === 1 )
-  o = { element : o };
 
   if( arguments.length === 2 )
   {
@@ -383,7 +393,7 @@ function _resourceVideoUrlGet( o )
       var resource = {};
       resource.name = '[subtitles] ' + o.element.name;
       resource.id  = o.element.content.definition.videoId;
-      resource.kind = self.ResourceKindMapper.valueFor( 'downloadable' );
+      resource.kind = self.ResourceKindMapper.valueFor( 'subtitles' );
       resource.dataUrl = subUrl;
       resource.raw =  data;
 
@@ -407,7 +417,7 @@ _resourceVideoUrlGet.defaults =
 
 //
 
-function _resourceHtmlGet( element )
+function _resourceHtmlGet( element, parent )
 {
   var self = this;
   var urlOptions =
@@ -440,11 +450,13 @@ function _resourceHtmlGet( element )
     var resource = {};
     resource.name = element.name;
     resource.id  = element.id;
-    resource.kind = self.ResourceKindMapper.valueFor( 'supplement' );
+    resource.kind = self.ResourceKindMapper.valueFor( element.content.definition.assetTypeName );
     resource.raw =  element;
+    resource.pageUrl = self._resourcePageUrlGet( resource );
     resource.raw.data =  result[ keys[ 0 ] ];
 
     self._resources.push( resource );
+    parent.elements.push( resource.id );
 
     return self._resources;
 
@@ -490,9 +502,7 @@ function _resourceAssetUrlGet( element, parent )
     {
       ids.push( got );
       if( ids.length === assets.length )
-      {
-        return ids;
-      }
+      return ids;
     });
 
   });
@@ -523,7 +533,7 @@ function _resourceAssetUrlGet( element, parent )
         var resource = {};
         resource.name = element.name;
         resource.id  = asset.id;
-        resource.kind = self.ResourceKindMapper.valueFor( 'downloadable' );
+        resource.kind = self.ResourceKindMapper.valueFor( 'asset' );
         resource.dataUrl = asset.url;
         resource.raw =  asset;
 
@@ -532,9 +542,7 @@ function _resourceAssetUrlGet( element, parent )
         ++counter;
 
         if( counter === data.elements.length )
-        {
-          return self._resources;
-        }
+        return self._resources;
       })
     });
   });
@@ -544,21 +552,22 @@ function _resourceAssetUrlGet( element, parent )
 
 //
 
-var ResourceKindMapper = wNameMapper
+var ResourceKindMapper = wNameMapper({ droppingDuplicate : 1 }).set
 ({
 
   /* terminal */
-
-  'exam' : 'discussion',
+  'discussion' : 'discussion',
+  'exam' : 'problem',
   'quiz' : 'problem',
-  'downloadable' : 'downloadable',
-  'supplement' : 'hypertext',
-  'lecture' : 'page',
+  'asset' : 'downloadable',
+  'subtitles' : 'downloadable',
+  'cml' : 'hypertext',/*Coursera Markup Language*/
   'video' : 'video',
 
   /* non-terminal */
 
-  // 'vertical' : 'page',
+  'lecture' : 'page',
+  'supplement' : 'page',
   'section' : 'section',
   'week' : 'chapter',
   'course' : 'course',
@@ -615,6 +624,7 @@ var Proto =
   _resourceVideoUrlGet : _resourceVideoUrlGet,
   _resourceHtmlGet : _resourceHtmlGet,
   _resourceAssetUrlGet : _resourceAssetUrlGet,
+  _resourcePageUrlGet : _resourcePageUrlGet,
 
 
   // relationships
