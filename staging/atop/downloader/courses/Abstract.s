@@ -119,7 +119,7 @@ function _download()
   .ifNoErrorThen( self._make )
   .ifNoErrorThen( self._login )
   .ifNoErrorThen( self._coursesList )
-  .ifNoErrorThen( self._coursePickEither,[ 'Introduction to Differential Equations','Теория игр (Game Theory)',0 ] )
+  .ifNoErrorThen( self._coursePickEither,[ 'Introduction to Differential Equations','Introduction to Chemistry:  Reactions and Ratios',0 ] )
   .ifNoErrorThen( self._resourcesList )
   ;
 
@@ -742,7 +742,7 @@ function registerClass()
 var ResourceKindArray =
 [
   /* terminal */
-  'discussion','problem','html','video','downloadable',
+  'discussion','problem','hypertext','video','downloadable',
   /* non-terminal */
   'page', 'section', 'chapter','course',
 ];
