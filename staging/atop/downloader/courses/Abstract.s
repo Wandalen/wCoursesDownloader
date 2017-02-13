@@ -695,6 +695,22 @@ function logElementsOf( name,elements )
 
 }
 
+//
+
+function onAttempt( target )
+{
+  var self = this;
+
+  _.assert( _.arrayIs( self.currentResourceFormats ) );
+
+  if( self.currentResourceFormats.indexOf( target ) != -1 )
+  {
+    return true;
+  }
+
+  return false;
+}
+
 // --
 // class
 // --
@@ -815,6 +831,11 @@ var Aggregates =
   resourceListDone : new wConsequence(),
 
   _downloadsListTemp : [],
+
+  allowedVideoFormats : null,
+  prefferedVideoFormats : null,
+
+  currentResourceFormats : null,
 }
 
 var Associates =
@@ -904,6 +925,7 @@ var Proto =
   _request : _request,
   logElementsOf : logElementsOf,
   // makeDownloadsList : null,
+  onAttempt : onAttempt,
 
 
 

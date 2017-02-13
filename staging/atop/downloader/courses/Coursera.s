@@ -8,6 +8,9 @@ if( typeof module !== 'undefined' )
 {
   if( typeof wDownloaderOfCourses === 'undefined' )
   require( './Abstract.s' );
+
+  if( typeof wResourceFormat === 'undefined' )
+  require( '../ResourceFormat.s' );
 }
 
 // constructor
@@ -330,6 +333,7 @@ function _resourceVideoUrlGet( o )
   }
 
   var getUrl = _.strReplaceAll( urlOptions );
+  var data;
 
   return self._request( getUrl )
   .thenDo( function( err, got )
@@ -351,56 +355,65 @@ function _resourceVideoUrlGet( o )
 
     var resolutions = Object.keys( video );
 
-    if( resolutions.indexOf( o.resolution ) === -1 )
-    throw _.err( 'Unavailable video resolution: ', o.resolution, ',available are:', resolutions );
-
-    var formats = Object.keys( video[ o.resolution ] );
-
-    if( formats.indexOf( o.format + 'VideoUrl' ) === -1 )
-    throw _.err( 'Unavailable video format: ', o.format );
-
-    var videoUrl = video[ o.resolution ][ o.format + 'VideoUrl' ];
-
     /*subtitles*/
-    if( !o.videoOnly )
+    // if( !o.videoOnly )
+    // {
+    //   var sub = _.entitySearch({ src : data, ins : 'subtitles' });
+    //   var subKeys = Object.keys( sub );
+    //
+    //   sub = sub[ subKeys[ 0 ] ];
+    //
+    //   var subtitlesLangs = Object.keys( sub );
+    //
+    //   if( subtitlesLangs.indexOf( o.subtitles ) === -1 )
+    //   throw _.err( 'Unavailable subtitles language: ', o.subtitles, ',available are:', subtitlesLangs );
+    //
+    //   var subUrl = self.config.site + sub[ o.subtitles ];
+    // }
+
+    self.currentResourceFormats = resolutions;
+    return { raw : data, video : video };
+  })
+  .thenDo( function( err, got )
+  {
+    data = got;
+    var ResourceFormat = _.ResourceFormat({ target : self, allowedName : 'allowedVideoFormats',prefferedName :'prefferedVideoFormats' });
+    return ResourceFormat.make();
+  })
+  .thenDo( function( err, got )
+  {
+    console.log( "Selected formats: ", got );
+    var dataUrl = [];
+    got.forEach( function ( resolution )
     {
-      var sub = _.entitySearch({ src : data, ins : 'subtitles' });
-      var subKeys = Object.keys( sub );
+      var videoUrl = data.video[ resolution ][ o.format + 'VideoUrl' ];
+      dataUrl.push( videoUrl );
+    });
 
-      sub = sub[ subKeys[ 0 ] ];
-
-      var subtitlesLangs = Object.keys( sub );
-
-      if( subtitlesLangs.indexOf( o.subtitles ) === -1 )
-      throw _.err( 'Unavailable subtitles language: ', o.subtitles, ',available are:', subtitlesLangs );
-
-      var subUrl = self.config.site + sub[ o.subtitles ];
-    }
-
+    // if( !o.videoOnly )
+    // {
+    //   var resource = {};
+    //   resource.name = '[subtitles] ' + o.element.name;
+    //   resource.id  = o.element.content.definition.videoId;
+    //   resource.kind = self.ResourceKindMapper.valueFor( 'subtitles' );
+    //   resource.dataUrl = subUrl;
+    //   resource.raw =  data;
+    //
+    //   self._resources.push( resource );
+    // }
 
     var resource = {};
     resource.name = o.element.name;
     resource.id  = o.element.content.definition.videoId;
     resource.kind = self.ResourceKindMapper.valueFor( 'video' );
-    resource.dataUrl = videoUrl;
-    resource.raw =  data;
+    resource.dataUrl = dataUrl;
+    resource.raw =  data.raw;
 
     self._resources.push( resource );
     o.parent.elements.push( resource.id );
 
-    if( !o.videoOnly )
-    {
-      var resource = {};
-      resource.name = '[subtitles] ' + o.element.name;
-      resource.id  = o.element.content.definition.videoId;
-      resource.kind = self.ResourceKindMapper.valueFor( 'subtitles' );
-      resource.dataUrl = subUrl;
-      resource.raw =  data;
-
-      self._resources.push( resource );
-    }
-
     return self._resources;
+
   });
 }
 
@@ -408,7 +421,6 @@ _resourceVideoUrlGet.defaults =
 {
   element : null,
   parent : null,
-  resolution : '720p',
   format : 'mp4',
   subtitles : 'en',
 
@@ -552,6 +564,10 @@ function _resourceAssetUrlGet( element, parent )
 
 //
 
+
+
+//
+
 var ResourceKindMapper = wNameMapper({ droppingDuplicate : 1 }).set
 ({
 
@@ -585,6 +601,8 @@ var Composes =
 
 var Aggregates =
 {
+  prefferedVideoFormats : [ '720p' ],
+  allowedVideoFormats : [ '720p', '360p', '540p' ],
 }
 
 var Associates =
@@ -625,7 +643,6 @@ var Proto =
   _resourceHtmlGet : _resourceHtmlGet,
   _resourceAssetUrlGet : _resourceAssetUrlGet,
   _resourcePageUrlGet : _resourcePageUrlGet,
-
 
   // relationships
 
