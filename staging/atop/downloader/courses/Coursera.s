@@ -678,4 +678,29 @@ _.accessorReadOnly( Self.prototype,
 {
 });
 
+// subtitlesFormatPreffered : [ 'txt','srt','vtt',null ],
+// subtitlesFormatNeeded : 'txt',
+//
+// titleFormat : wPrefferedArray
+// ({
+//   preffered : [ 'txt','srt','vtt',null ],
+//   needed : 'txt',
+// });
+//
+// var dc = _.DownloaderOfCourses.Loader( 'Edx' );
+// dc.copy
+// ({
+//   subtitlesFormat :
+//   {
+//     preffered : [ 'txt','srt','vtt',null ],
+//     needed : [ 'txt' ],
+//   }
+// });
+//
+// var dc = _.DownloaderOfCourses.Loader( 'Edx' );
+// dc.copy
+// ({
+//   subtitlesFormat : 'txt'
+// });
+
 })();
