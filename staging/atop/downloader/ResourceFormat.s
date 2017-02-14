@@ -80,7 +80,7 @@ function make()
 function _attempt()
 {
   var self = this;
-  var con = new wConsequence();
+  var con = new wConsequence().give();
 
   _.assert( _.strIs( self.prefferedName ) );
   _.assert( _.strIs( self.allowedName ) );
@@ -123,33 +123,49 @@ function _attempt()
 
   _.assert( _.routineIs( self.onAttempt ) );
 
-  for( var i = 0; i < preffered.length; i++ )
+  function _selectFormat( src )
   {
-    if( allowed.indexOf( preffered[ i ] ) != 1 )
+    for( var i = 0; i < src.length; i++ )( function ()
     {
-      if( self.onAttempt.call( self.target, preffered[ i ] ) )
-      result.push( preffered[ i ] );
-    }
+      var format = src[ i ];
+      if( allowed.indexOf( format ) != -1 )
+      con.thenDo( _.routineSeal( self.target, self.onAttempt, [ format ] ) )
+      .thenDo( function( err,got )
+      {
+        if( got )
+        result.push( format );
+
+        if( format === src[ src.length - 1 ] )
+        return result;
+      });
+    })();
   }
 
+  if( preffered.length && allowed.length )
+  _selectFormat( preffered );
+
   if( !result.length && prefferedAny )
-  {
-    for( var i = 0; i < allowed.length; i++ )
-    {
-      if( self.onAttempt.call( self.target, allowed[ i ] ) )
-      result.push( allowed[ i ] );
-    }
-  }
+  _selectFormat( allowed );
 
   if( !result.length && allowedAny && prefferedAny )
   {
-    result = self.onAttempt.call( self.target );
+    con.thenDo( _.routineSeal( self.target, self.onAttempt ) )
+    .thenDo( function( err,got )
+    {
+      result = got;
+    });
   }
 
-  if( !result.length )
-  con.error( _.err( "Any of preffered or allowed formats is not available!" ) )
-  else
-  con.give( result )
+  //
+
+  con.thenDo( function()
+  {
+    if( !result.length )
+    con.error( _.err( "Any of preffered or allowed formats is not available!" ) )
+    else
+    return result;
+  })
+
 
   return con;
 }

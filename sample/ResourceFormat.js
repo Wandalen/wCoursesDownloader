@@ -4,26 +4,43 @@ require( '../staging/atop/downloader/ResourceFormat.s' );
 var _ = wTools;
 
 
+// function onAttempt( target )
+// {
+//   var self = this;
+//
+//   if( target )
+//   {
+//     if( self.availableFormats.indexOf( target ) != -1 )
+//     return true;
+//
+//     return false;
+//   }
+//
+//   return self.availableFormats;
+// }
 function onAttempt( target )
 {
   var self = this;
 
-  if( target )
+  return _.timeOut(500)
+  .thenDo(function()
   {
-    if( self.availableFormats.indexOf( target ) != -1 )
-    return true;
+    if( target )
+    {
+      if( self.availableFormats.indexOf( target ) != -1 )
+      return true;
 
-    return false;
-  }
-
-  return self.availableFormats;
+      return false;
+    }
+    return self.availableFormats;
+  })
 }
 
 var Downloader =
 {
-  availableFormats : [ '1080p', '720p' ],
-  resourceFormatAllowed : [ '360p', null ],
-  resourceFormatPreffered : [ null ],
+  availableFormats : [ '720p','360p' ],
+  resourceFormatAllowed : [ '720p',null ],
+  resourceFormatPreffered : [ '1080p', null ],
   onAttempt : onAttempt
 }
 
