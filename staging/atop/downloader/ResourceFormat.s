@@ -93,7 +93,10 @@ function _attempt()
   _.assert( _.arrayIs( prefferedFormats ) && _.arrayIs( allowedFormats ) )
 
   if( !prefferedFormats.length || !allowedFormats.length )
-  return con.give( result );
+  return con.thenDo( function()
+  {
+    return result;
+  })
 
   var preffered = _.arrayUnique( prefferedFormats );
   var allowed = _.arrayUnique( allowedFormats );
