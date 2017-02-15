@@ -80,23 +80,40 @@ function make()
 function _attempt()
 {
   var self = this;
-  var con = new wConsequence();
+  var con = new wConsequence().give();
 
   _.assert( _.strIs( self.prefferedName ) );
   _.assert( _.strIs( self.allowedName ) );
 
   var result = [];
+  var isEmpty;
 
-  var prefferedFormats = self.target[ self.prefferedName ];
-  var allowedFormats = self.target[ self.allowedName ];
+  var allowedA  = _.arrayUnique( self.target[ self.allowedName ] );
+  var prefferedA = _.arrayUnique( self.target[ self.prefferedName ] );
 
-  _.assert( _.arrayIs( prefferedFormats ) && _.arrayIs( allowedFormats ) )
+  _.assert( _.arrayIs( prefferedA ) && _.arrayIs( allowedA ) )
 
-  if( !prefferedFormats.length || !allowedFormats.length )
-  return con.give( result );
 
-  var preffered = _.arrayUnique( prefferedFormats );
-  var allowed = _.arrayUnique( allowedFormats );
+  if( self.dependsOf )
+  {
+    _.assert( _.objectIs( self.dependsOf ) );
+    _.assert( _.strIs( self.dependsOf.prefferedName ) && _.strIs( self.dependsOf.allowedName ));
+
+    var allowedB = _.arrayUnique( self.target[ self.dependsOf.allowedName ] );
+    var prefferedB= _.arrayUnique( self.target[ self.dependsOf.prefferedName ] );
+
+    _.assert( _.arrayIs( prefferedB ) && _.arrayIs( allowedB ) );
+
+    if( !prefferedB.length || !allowedB.length )
+    isEmpty = true;
+  }
+
+  if( !isEmpty )
+  if( !prefferedA.length || !allowedA.length )
+  isEmpty = true;
+
+  if( isEmpty )
+  return new wConsequence().give( result );
 
   function _checkForAny( src )
   {
@@ -118,44 +135,119 @@ function _attempt()
     return res;
   }
 
-  var prefferedAny = _checkForAny( preffered );
-  var allowedAny = _checkForAny( allowed );
+  var prefferedAnyA = _checkForAny( prefferedA );
+  var allowedAnyA = _checkForAny( allowedA ) ;
+
+  if( self.dependsOf )
+  {
+    var prefferedAnyB = _checkForAny( prefferedB );
+    var allowedAnyB = _checkForAny( allowedB );
+  }
 
   _.assert( _.routineIs( self.onAttempt ) );
 
-  for( var i = 0; i < preffered.length; i++ )
+  function _selectFormat( src )
   {
-    if( allowed.indexOf( preffered[ i ] ) != 1 )
+    for( var i = 0; i < src.length; i++ )( function ()
     {
-      if( self.onAttempt.call( self.target, preffered[ i ] ) )
-      result.push( preffered[ i ] );
+      var format = src[ i ];
+      if( allowedA.indexOf( format ) != -1 )
+      con.thenDo( _.routineSeal( self.target, self.onAttempt, [ format ] ) )
+      .thenDo( function( err,got )
+      {
+        if( got )
+        result.push( format );
+
+        if( format === src[ src.length - 1 ] )
+        return result;
+      });
+    })();
+  }
+
+  //
+
+  function _selectFormatVary( prefferedA, prefferedB )
+  {
+    for( var i = 0; i < prefferedA.length; i++ )( function ()
+    {
+      var formatA = prefferedA[ i ];
+      if( allowedA.indexOf( formatA ) != -1 )
+      for( var j = 0; j < prefferedB.length; j++ )( function ()
+      {
+        var formatB = prefferedB[ j ];
+
+        if( allowedB.indexOf( formatB ) != -1 )
+        con.thenDo( _.routineSeal( self.target, self.onAttempt, [ formatA,formatB ] ) )
+        .thenDo( function( err,got )
+        {
+          if( got )
+          {
+            var res = {};
+            res[ formatB ] = formatA;
+            result.push( res );
+          }
+
+          if( i === prefferedA.length - 1 && j === prefferedB.length - 1)
+          return result;
+        });
+      })();
+    })();
+  }
+
+  if( self.dependsOf )
+  {
+    _selectFormatVary( prefferedA, prefferedB );
+
+    if( !result.length )
+    {
+      if( prefferedAnyA && prefferedAnyB )
+      _selectFormatVary( allowedA, allowedB );
+      else if( prefferedAnyA  )
+      _selectFormatVary( allowedA, prefferedB );
+      else if( prefferedAnyB )
+      _selectFormatVary( prefferedA, allowedB );
     }
   }
-
-  if( !result.length && prefferedAny )
-  {
-    for( var i = 0; i < allowed.length; i++ )
-    {
-      if( self.onAttempt.call( self.target, allowed[ i ] ) )
-      result.push( allowed[ i ] );
-    }
-  }
-
-  if( !result.length && allowedAny && prefferedAny )
-  {
-    result = self.onAttempt.call( self.target );
-  }
-
-  if( !result.length )
-  con.error( _.err( "Any of preffered or allowed formats is not available!" ) )
   else
-  con.give( result )
+  {
+    if( prefferedA.length && allowedA.length )
+    _selectFormat( prefferedA );
+
+    if( !result.length && prefferedAny )
+    _selectFormat( allowedA );
+  }
+
+  var allowedAny = allowedAnyA;
+
+  if( self.dependsOf )
+  {
+    allowedAny = allowedAnyA && allowedAnyB;
+  }
+
+  if( !result.length && allowedAny )
+  {
+    con.thenDo( _.routineSeal( self.target, self.onAttempt, [] ) )
+    .thenDo( function( err,got )
+    {
+      result = got;
+    });
+  }
+
+  //
+
+  con.thenDo( function()
+  {
+    if( !result.length )
+    con.error( _.err( "Any of preffered or allowed formats is not available!" ) )
+    else
+    return result;
+  })
+
 
   return con;
 }
 
 //
-
 
 // --
 // relationships
@@ -168,6 +260,8 @@ var Composes =
   target : null,
   allowedName : null,
   prefferedName : null,
+
+  dependsOf : null,
 
   onAttempt : null,
 }
@@ -199,7 +293,6 @@ var Proto =
   make : make,
 
   _attempt : _attempt,
-
 
   // relationships
 
