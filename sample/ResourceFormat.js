@@ -9,42 +9,136 @@ var _ = wTools;
 //   var self = this;
 //
 //   if( target )
-//   {
-//     if( self.availableFormats.indexOf( target ) != -1 )
-//     return true;
+//  {
+//    var result = _.entitySelect({ container : self.video, query : target });
 //
-//     return false;
-//   }
+//    if( target )
+//    return true;
 //
-//   return self.availableFormats;
+//    return false;
+//  }
+//
+//  return [ self.video ];
 // }
-function onAttempt( target )
+
+// function onAttempt( target )
+// {
+//   var self = this;
+//
+//
+//   return _.timeOut(500)
+//   .thenDo(function()
+//   {
+//     if( target )
+//    {
+//      var result = _.entitySelect({ container : self.video, query : target });
+//
+//      if( target )
+//      return true;
+//
+//      return false;
+//    }
+//
+//    return [ self.video ];
+//   })
+// }
+
+function onAttempt( a, b )
 {
   var self = this;
+
 
   return _.timeOut(500)
   .thenDo(function()
   {
-    if( target )
-    {
-      if( self.availableFormats.indexOf( target ) != -1 )
-      return true;
+    if( !a || !b )
+    return [ self.video ];
 
-      return false;
+    var query = a;
+
+    if( self.videoVaryFirst === 'resolution' )
+    {
+      query = b;
+      b = a;
     }
-    return self.availableFormats;
+
+    var result = _.entitySelect({ container : self.video, query : query });
+
+    if( !result )
+    return false;
+
+    if( result.indexOf( b ) != -1 )
+    return true;
+
   })
 }
 
 var Downloader =
 {
-  availableFormats : [ '720p','360p' ],
-  resourceFormatAllowed : [ '720p',null ],
-  resourceFormatPreffered : [ '1080p', null ],
+  video :
+  {
+    '720p' :
+    [
+      'mp4',
+      'webm'
+    ],
+    '360p' :
+    [
+      'mp4',
+      'webm'
+    ],
+    '540p' :
+    [
+      'mp4',
+      'webm'
+    ],
+  },
+
+  videoResolutionAllowed : [ '720p', '360p', '540p' ],
+  videoResolutionPreffered  : [ '720p','360p' ],
+  // videoResolutionAllowed : [ null ],
+  // videoResolutionPreffered  : [ null ],
+
+  videoFormatAllowed : [ 'mp4','webm' ],
+  videoFormatPreffered  : [ 'mp4','webm' ],
+  // videoFormatAllowed : [ null ],
+  // videoFormatPreffered  : [ null ],
+
+  videoVaryFirst : 'format',
+
   onAttempt : onAttempt
 }
 
-var rf = _.ResourceFormat( { target : Downloader, allowedName : 'resourceFormatAllowed', prefferedName : 'resourceFormatPreffered' } );
+var o =
+{
+  target : Downloader,
+  allowedName : 'videoFormatAllowed',
+  prefferedName : 'videoFormatPreffered'
+}
+
+if( Downloader.videoVaryFirst === 'format' )
+{
+  o.allowedName = 'videoResolutionAllowed';
+  o.prefferedName = 'videoResolutionPreffered';
+  o.dependsOf =
+  {
+    allowedName : 'videoFormatAllowed',
+    prefferedName : 'videoFormatPreffered'
+  }
+}
+if( Downloader.videoVaryFirst === 'resolution' )
+{
+  o.allowedName = 'videoFormatAllowed';
+  o.prefferedName = 'videoFormatPreffered';
+  o.dependsOf =
+  {
+    allowedName : 'videoResolutionAllowed',
+    prefferedName : 'videoResolutionPreffered'
+  }
+}
+
+var rf = _.ResourceFormat( o );
+debugger;
 rf.make()
 .thenDo( function( err, got )
 {
