@@ -2,13 +2,18 @@
 Helps to select first avaible variant for single parameter or combination of several parameters.Each parameter is specified by two containers: list of allowed parameters and list of parameters preffered by user.
 Algorithm takes each variant and checks it avaibility by calling `onAttempt` callback, if variant is avaible stops search and returns true, otherwise continues until end and returns false if nothing found.
 ### Glossary
-Variant - single parameter value or combination of values from several parameters with relationships specified by 'dependsOf' property. Example: video resolution,format,subtitles format,language and combinations: video resolution + format, subtitles format + language.
-Variant is avaible - means that user can perform some operations using it,for example,download file with format as variant value.
-Options:
+* Variant - single parameter value or combination of values from several parameters with relationships specified by 'dependsOf' property. Example: video resolution,format,subtitles format,language and combinations: video resolution + format, subtitles format + language.
+
+* Variant is avaible - means that user can perform some operations using it,for example,download file with format as variant value.
+
 * allowedName - name of variable that holds list of [allowed parameters.](  )
+
 * prefferedName - name of variable that holds list of [parameters preffered by user.]()
+
 * target - reference to object that stores variables with names specified in `allowedName` and `prefferedName`.
+
 * onAttempt - callback function that checks if passed variant is avaible,must be responsible to get current value of dependent parameter by it self,returns answer as true/false directly or through [wConsequence](https://github.com/Wandalen/wConsequence). Also can perform additional operations, for example download file if current format variant exists or add this variant to some list.
+
 * dependsOf - map that specifies leading-dependent relationship between parameters.Must contain allowedName,prefferedName and callback onAttempt. Parameter specified inside `dependsOf` becomes leading and parameter in parent scope becomes dependent and it onAttempt callback is ignored. Algorithm varies values of leading parameter then varies dependent.To create more relationships add dependsOf property inside of previous:
 ```
 dependsOf :
@@ -23,8 +28,9 @@ dependsOf :
 }
 ```
 
-Example for single format:
+Example for single parameter:
 ```
+var o =
 {
   allowedName : 'resourceFormatAllowed',
   prefferedName : 'resourceFormatPreffered',
@@ -33,18 +39,21 @@ Example for single format:
 }
 ```
 
-Example for two formats:
+Example for two parameters:
 ```
+var something =
+{
+  allowedName : 'allowedName of leading'
+  prefferedName : 'prefferedName of leading',
+  onAttempt : callback function
+}
+
+var o =  
 {
   allowedName : 'allowedName of dependent',
   prefferedName : 'prefferedName of dependent',
   target : object,
-  dependsOf :
-  {
-    allowedName : 'allowedName of leading'
-    prefferedName : 'prefferedName of leading',
-    onAttempt : callback function
-  }  
+  dependsOf : something
 }
 ```
 
