@@ -5,7 +5,7 @@ var _ = wTools;
 
 var Downloader =   require( '../staging/atop/test/Downloader.s' );
 
-var downloader = Downloader({ videoVaryFirst : null } );
+var downloader = Downloader({ videoVaryFirst : null, resolutionPreffered : [ '340p','340p','340p' ] } );
 
 var o =
 {
@@ -36,14 +36,15 @@ if( downloader.videoVaryFirst === 'resolution' )
   }
 }
 
-var rf = _.ParameterVariator( o );
+var variator = _.ParameterVariator( o );
 debugger;
-rf.make()
+variator.make()
 .thenDo( function( err, got )
 {
   if( err )
   throw _.err( err );
+
   console.log( got );
 
-  console.log( downloader.selectedVariants );
+  console.log( variator.target.selectedVariants );
 })

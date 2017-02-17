@@ -85,41 +85,41 @@ function onAttemptResolution( variant )
 function onAttempt( a, b )
 {
   var self = this;
-
-  return _.timeOut( 100 )
-  .thenDo( function()
+  if( arguments.length === 1 )
   {
-
-    if( arguments.length === 1 )
-    if( self.onAttemptResolution( a ) || onAttemptFormat( a ) )
+    if( self.onAttemptResolution( a ) )
     {
       self.selectedVariants.push( a );
       return true;
     }
-
-    if( arguments.length === 2 )
+    if( self.onAttemptFormat( a ) )
     {
-      if( self.videoVaryFirst === 'resolution' )
-      {
-        var t = a;
-        a = b;
-        b = t;
-      }
+      self.selectedVariants.push( a );
+      return true;
+    }
+  }
 
-      if( self.resolutionAvaible.indexOf( a ) != -1 )
-      {
-        if( self.formatAvaible.indexOf( b ) != -1 )
-        {
-          self.selectedVariants.push( a + ',' + b );
-          return true;
-        }
-      }
+  if( arguments.length === 2 )
+  {
+    if( self.videoVaryFirst === 'resolution' )
+    {
+      var t = a;
+      a = b;
+      b = t;
     }
 
-    return false;
-  });
-}
+    if( self.resolutionAvaible.indexOf( a ) != -1 )
+    {
+      if( self.formatAvaible.indexOf( b ) != -1 )
+      {
+        self.selectedVariants.push( a + ',' + b );
+        return true;
+      }
+    }
+  }
 
+  return false;
+}
 
 
 // --
