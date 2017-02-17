@@ -5,7 +5,12 @@ var _ = wTools;
 
 var Downloader =   require( '../staging/atop/test/Downloader.s' );
 
-var downloader = Downloader({ videoVaryFirst : null, resolutionPreffered : [ '340p','340p','340p' ] } );
+var downloader = Downloader
+({
+  videoVaryFirst : null,
+  resolutionPreffered : [ null ],
+  resolutionAllowed : [ '360p', '540p' ]
+});
 
 var o =
 {

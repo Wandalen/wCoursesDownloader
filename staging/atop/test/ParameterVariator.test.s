@@ -61,7 +61,7 @@ function simpleTest( test )
     console.log( got );
 
     test.description = "test1";
-    test.identical( downloader.selectedVariants, [ '720p' ] );
+    test.identical( rf.target.selectedVariants, [ '720p' ] );
   })
 
 

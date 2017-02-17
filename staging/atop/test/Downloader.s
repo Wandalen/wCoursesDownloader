@@ -85,6 +85,12 @@ function onAttemptResolution( variant )
 function onAttempt( a, b )
 {
   var self = this;
+  if( !arguments.length )
+  {
+    self.selectedVariants.push( self.resolutionAvaible[0] );
+    return true;
+  }
+
   if( arguments.length === 1 )
   {
     if( self.onAttemptResolution( a ) )
