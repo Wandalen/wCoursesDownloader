@@ -1,5 +1,49 @@
 ### ResourceFormat
-Makes list of avaible to download resource formats using two containers: list of allowed formats and list of formats preffered by user.
+Helps to select first avaible to download resource format or formats combination.Each format is specified by two containers: list of allowed formats and list of formats preffered by user.
+Takes each variant and checks it avaibility by calling `onAttempt` callback, if variant is avaible stops search and returns true, otherwise continues until end and returns false if nothing founded.
+Variant - single format or combination of several formats with relationships specified by 'dependsOf' property.
+### Options
+
+* allowedName - name of variable that holds list of [resource allowed formats.]( #resourceFormatAllowed - list-of-resource-allowed-formats )
+* prefferedName - name of variable that holds list of [resource formats preffered by user.](#resourceFormatPreffered - list-of-resource-formats-preffered-by-user)
+* target - reference to object that stores variables with names specified in `allowedName` and `prefferedName`.
+* onAttempt - callback function that checks if passed format or combination of formats can be downloaded, returns answer as true/false directly or through [wConsequence](https://github.com/Wandalen/wConsequence).
+* dependsOf - map that specifies leading-dependent relationship between formats. Format specified inside `dependsOf` becomes leading and will vary first. Must contain allowedName,prefferedName and callback onAttempt. Format specified in parent scope becomes dependent and it onAttempt callback is ignored.
+To create more relationships add dependsOf property inside of previous.
+```
+dependsOf :
+{
+  allowedName : '...'
+  prefferedName : '...',
+  dependsOf :
+  {
+    allowedName : '...'
+    prefferedName : '...',
+  }
+}
+```
+
+Example for single format:
+```
+allowedName : 'resourceFormatAllowed',
+prefferedName : 'resourceFormatPreffered',
+target : object,
+onAttempt : callback function,
+```
+
+Example for two formats:
+```
+allowedName : 'allowedName of dependent',
+prefferedName : 'prefferedName of dependent',
+target : object,
+dependsOf :
+{
+  allowedName : 'allowedName of leading'
+  prefferedName : 'prefferedName of leading',
+  onAttempt : callback function
+}
+```
+
 
 #### resourceFormatAllowed - list of resource allowed formats
 
