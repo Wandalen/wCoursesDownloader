@@ -1,4 +1,4 @@
-( function _ResourceFormat_s_( ) {
+( function _ParameterVariator_s_( ) {
 
 'use strict';
 
@@ -32,7 +32,7 @@ var symbolForAny = Symbol.for( 'any' );
 
 var _ = wTools;
 var Parent = null;
-var Self = function wResourceFormat( o )
+var Self = function wParameterVariator( o )
 {
   if( !( this instanceof Self ) )
   if( o instanceof Self )
@@ -42,7 +42,7 @@ var Self = function wResourceFormat( o )
   return Self.prototype.init.apply( this,arguments );
 }
 
-Self.nameShort = 'ResourceFormat';
+Self.nameShort = 'ParameterVariator';
 
 // --
 // inter
