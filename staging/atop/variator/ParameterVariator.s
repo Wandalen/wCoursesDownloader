@@ -27,6 +27,7 @@ if( typeof module !== 'undefined' )
 }
 
 var symbolForAny = Symbol.for( 'any' );
+var symbolForSkip = Symbol.for( 'skip' );
 
 // constructor
 
@@ -80,171 +81,147 @@ function make()
 function _attempt()
 {
   var self = this;
+
   var con = new wConsequence().give();
 
-  _.assert( _.strIs( self.prefferedName ) );
-  _.assert( _.strIs( self.allowedName ) );
+  var allowed = self.target[ self.allowedName ];
+  var preffered = self.target[ self.prefferedName ];
 
-  var result = [];
-  var isEmpty;
+  var prefferedAny =  self._checkForAny( preffered );
+  var allowedAny =  self._checkForAny( allowed );
 
-  var allowedA  = _.arrayUnique( self.target[ self.allowedName ] );
-  var prefferedA = _.arrayUnique( self.target[ self.prefferedName ] );
+  var allowedSkip = self._checkForSkip( allowed );
 
-  _.assert( _.arrayIs( prefferedA ) && _.arrayIs( allowedA ) )
+  var i = 0;
+  var selected = 0;
 
-
-  if( self.dependsOf )
+  if( !preffered.length && !prefferedAny)
+  return con.thenDo( function()
   {
-    _.assert( _.objectIs( self.dependsOf ) );
-    _.assert( _.strIs( self.dependsOf.prefferedName ) && _.strIs( self.dependsOf.allowedName ));
+    logger.error( "Warning! Preffered is empty" );
+    return false;
+  });
 
-    var allowedB = _.arrayUnique( self.target[ self.dependsOf.allowedName ] );
-    var prefferedB= _.arrayUnique( self.target[ self.dependsOf.prefferedName ] );
-
-    _.assert( _.arrayIs( prefferedB ) && _.arrayIs( allowedB ) );
-
-    if( !prefferedB.length || !allowedB.length )
-    isEmpty = true;
-  }
-
-  if( !isEmpty )
-  if( !prefferedA.length || !allowedA.length )
-  isEmpty = true;
-
-  if( isEmpty )
-  return new wConsequence().give( result );
-
-  function _checkForAny( src )
+  function varyPreffered( preffered, allowed )
   {
-    var res = false;
-    var i = src.indexOf( null );
-    if( i != -1 )
+    var variant = preffered.shift();
+
+    if( allowed.indexOf( variant ) != -1 )
+    con.thenDo( _.routineSeal( self.target, self.onAttempt,[ variant ] ) );
+
+    con.thenDo( function ( err, got )
     {
-      src.splice( i, 1 );
-      res = true;
-    }
-
-    i = src.indexOf( symbolForAny );
-    if( i != -1 )
-    {
-      src.splice( i, 1 );
-      res = true;
-    }
-
-    return res;
-  }
-
-  var prefferedAnyA = _checkForAny( prefferedA );
-  var allowedAnyA = _checkForAny( allowedA ) ;
-
-  if( self.dependsOf )
-  {
-    var prefferedAnyB = _checkForAny( prefferedB );
-    var allowedAnyB = _checkForAny( allowedB );
-  }
-
-  _.assert( _.routineIs( self.onAttempt ) );
-
-  function _selectFormat( src )
-  {
-    for( var i = 0; i < src.length; i++ )( function ()
-    {
-      var format = src[ i ];
-      if( allowedA.indexOf( format ) != -1 )
-      con.thenDo( _.routineSeal( self.target, self.onAttempt, [ format ] ) )
-      .thenDo( function( err,got )
+      if( got )
+      return true;
+      else if( preffered.length )
       {
-        if( got )
-        result.push( format );
-
-        if( format === src[ src.length - 1 ] )
-        return result;
-      });
-    })();
-  }
-
-  //
-
-  function _selectFormatVary( prefferedA, prefferedB )
-  {
-    for( var i = 0; i < prefferedA.length; i++ )( function ()
-    {
-      var formatA = prefferedA[ i ];
-      if( allowedA.indexOf( formatA ) != -1 )
-      for( var j = 0; j < prefferedB.length; j++ )( function ()
+        varyPreffered( preffered,allowed );
+      }
+      else if( prefferedAny )
       {
-        var formatB = prefferedB[ j ];
+        return varyPrefferedAny( allowed );
+      }
 
-        if( allowedB.indexOf( formatB ) != -1 )
-        con.thenDo( _.routineSeal( self.target, self.onAttempt, [ formatA,formatB ] ) )
-        .thenDo( function( err,got )
-        {
-          if( got )
-          {
-            var res = {};
-            res[ formatB ] = formatA;
-            result.push( res );
-          }
-
-          if( i === prefferedA.length - 1 && j === prefferedB.length - 1)
-          return result;
-        });
-      })();
-    })();
-  }
-
-  if( self.dependsOf )
-  {
-    _selectFormatVary( prefferedA, prefferedB );
-
-    if( !result.length )
-    {
-      if( prefferedAnyA && prefferedAnyB )
-      _selectFormatVary( allowedA, allowedB );
-      else if( prefferedAnyA  )
-      _selectFormatVary( allowedA, prefferedB );
-      else if( prefferedAnyB )
-      _selectFormatVary( prefferedA, allowedB );
-    }
-  }
-  else
-  {
-    if( prefferedA.length && allowedA.length )
-    _selectFormat( prefferedA );
-
-    if( !result.length && prefferedAny )
-    _selectFormat( allowedA );
-  }
-
-  var allowedAny = allowedAnyA;
-
-  if( self.dependsOf )
-  {
-    allowedAny = allowedAnyA && allowedAnyB;
-  }
-
-  if( !result.length && allowedAny )
-  {
-    con.thenDo( _.routineSeal( self.target, self.onAttempt, [] ) )
-    .thenDo( function( err,got )
-    {
-      result = got;
+      return false;
     });
   }
 
-  //
-
-  con.thenDo( function()
+  function varyPrefferedAny( allowed )
   {
-    if( !result.length )
-    con.error( _.err( "Any of preffered or allowed formats is not available!" ) )
-    else
-    return result;
-  })
+    if( allowed.length )
+    {
+      var variant = allowed.shift();
+      con.thenDo( _.routineSeal( self.target, self.onAttempt,[ variant ] ) );
+    }
+    else if( allowedAny )
+    {
+      con.thenDo( _.routineSeal( self.target, self.onAttempt, [] ) );
+    }
 
+    con.thenDo( function ( err, got )
+    {
+      if( got )
+      {
+        --prefferedAny;
+        selected++;
+      }
+      else
+      {
+        if( !allowed.length )
+        allowedAny = 0;
+      }
+
+      if( allowed.length ||  allowedAny )
+      return varyPrefferedAny( allowed);
+
+      if( prefferedAny )
+      {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  varyPreffered( preffered, allowed );
+
+  con.thenDo( function (err, got )
+  {
+    if( !got )
+    {
+      if( selected > 0 )
+      {
+        logger.error( "Warning! Selected ", selected, "parameters, expected", prefferedAny )
+      }
+      else if( allowedSkip )
+      {
+        logger.error( "Warning! Nothing selected, error skipped" );
+      }
+      else
+      {
+        throw _.err( 'Nothing avaible' );
+      }
+    }
+
+    return got;
+  });
 
   return con;
+}
+
+//
+
+function _checkForAny( src )
+{
+  var result = 0;
+
+  while( 1 )
+  {
+    var i = src.indexOf( symbolForAny );
+    if( i >= 0 )
+    {
+      src.splice( i, 1 );
+      result++;
+    }
+    else
+    break;
+  }
+
+  return result;
+}
+
+function _checkForSkip( src )
+{
+  var result = 0;
+
+  var i = src.indexOf( symbolForSkip );
+  if( i >= 0 )
+  {
+    src.splice( i, 1 );
+    result = true;
+  }
+
+  return result;
 }
 
 //
@@ -293,6 +270,9 @@ var Proto =
   make : make,
 
   _attempt : _attempt,
+
+  _checkForAny : _checkForAny,
+  _checkForSkip : _checkForSkip,
 
   // relationships
 

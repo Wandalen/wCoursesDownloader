@@ -8,8 +8,9 @@ var Downloader =   require( '../staging/atop/test/Downloader.s' );
 var downloader = Downloader
 ({
   videoVaryFirst : null,
-  resolutionPreffered : [ null ],
-  resolutionAllowed : [ '360p', '540p' ]
+  resolutionAvaible : [  ],
+  resolutionAllowed : [ Symbol.for( 'any' ),Symbol.for( 'skip' ) ],
+  resolutionPreffered : [ Symbol.for( 'any' ) ]
 });
 
 var o =
@@ -48,8 +49,6 @@ variator.make()
 {
   if( err )
   throw _.err( err );
-
-  console.log( got );
 
   console.log( variator.target.selectedVariants );
 })

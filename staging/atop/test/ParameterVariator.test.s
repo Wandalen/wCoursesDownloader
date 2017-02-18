@@ -43,7 +43,6 @@ function simpleTest( test )
   // videoVaryFirst : 'format',
 
   var downloader = Downloader();
-
   var o =
   {
     allowedName : 'resolutionAllowed',
@@ -51,20 +50,240 @@ function simpleTest( test )
     target : downloader,
     onAttempt : downloader.onAttempt
   }
+  var variator = _.ParameterVariator( o );
+  var consequence = new wConsequence().give();
 
-  var rf = _.ParameterVariator( o );
-  rf.make()
-  .thenDo( function( err, got )
+  consequence
+  .ifNoErrorThen( function()
   {
-    if( err )
-    throw _.err( err );
-    console.log( got );
-
-    test.description = "test1";
-    test.identical( rf.target.selectedVariants, [ '720p' ] );
+    test.description = 'case1';
+    var con =  variator.make();
+    con = test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '720p' ] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case2';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p' ],
+      resolutionAllowed : [ '720p', '360p', '540p' ],
+      resolutionPreffered : [ '300p', Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con = test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '540p' ] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case3';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p' ],
+      resolutionAllowed : [ Symbol.for( 'any' ) ],
+      resolutionPreffered : [ Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con = test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '540p' ] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case4';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p' ],
+      resolutionAllowed : [ '720p', '360p', '540p' ],
+      resolutionPreffered : [ '720p', Symbol.for( 'any' ),'540p' ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con = test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '540p' ] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case5';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p','360p' ],
+      resolutionAllowed : [ '540p','360p' ],
+      resolutionPreffered : [ Symbol.for( 'any' ),Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con = test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '540p','360p' ] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case6';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p','360p' ],
+      resolutionAllowed : [ Symbol.for( 'any' ) ],
+      resolutionPreffered : [ Symbol.for( 'any' ),Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con = test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '540p','360p' ] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case7';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p','360p' ],
+      resolutionAllowed : [ '540p' ],
+      resolutionPreffered : [ Symbol.for( 'any' ),Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con =  test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.identical( variator.target.selectedVariants, [ '540p'] );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case8';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [ '540p','360p' ],
+      resolutionAllowed : [  ],
+      resolutionPreffered : [ Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con =  test.shouldMessageOnlyOnce( con );
+    con =  test.shouldThrowError( con );
+    return con;
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case9';
+    downloader = Downloader
+    ({
+      resolutionPreffered : [ ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con =  test.shouldMessageOnlyOnce( con );
+    return con;
+  })
+  .ifNoErrorThen( function( got )
+  {
+    test.identical( got, false );
+  })
+  .ifNoErrorThen( function()
+  {
+    test.description = 'case10';
+    downloader = Downloader
+    ({
+      resolutionAvaible : [  ],
+      resolutionAllowed : [ Symbol.for( 'any' ) ],
+      resolutionPreffered : [ Symbol.for( 'any' ) ]
+    });
+    var o =
+    {
+      allowedName : 'resolutionAllowed',
+      prefferedName : 'resolutionPreffered',
+      target : downloader,
+      onAttempt : downloader.onAttempt
+    }
+    variator = _.ParameterVariator( o );
+    var con =  variator.make();
+    con =  test.shouldMessageOnlyOnce( con );
+    con =  test.shouldThrowError( con );
+    return con;
   })
 
-
+  return consequence;
 }
 
 
@@ -78,11 +297,11 @@ var Proto =
     simpleTest : simpleTest,
   },
 
-  /* verbosity : 1, */
+  verbosity : 1,
 
 }
 
-Object.setPrototypeOf( Self, Proto );
+_.mapExtend( Self,Proto );
 Self = wTestSuite( Self );
 
 if( typeof module !== 'undefined' && !module.parent )

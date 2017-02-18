@@ -72,8 +72,10 @@ function onAttemptFormat( variant )
 function onAttemptResolution( variant )
 {
   var self = this;
-  if( self.resolutionAvaible.indexOf( variant ) != -1 )
+  var i = self.resolutionAvaible.indexOf( variant );
+  if( i != -1 )
   {
+    self.resolutionAvaible.splice( i, 1 );
     return true;
   }
 
@@ -87,8 +89,12 @@ function onAttempt( a, b )
   var self = this;
   if( !arguments.length )
   {
-    self.selectedVariants.push( self.resolutionAvaible[0] );
-    return true;
+    if( self.resolutionAvaible.length )
+    {
+      self.selectedVariants.push( self.resolutionAvaible.shift() );
+      return true;
+    }
+    return false;
   }
 
   if( arguments.length === 1 )
@@ -103,6 +109,7 @@ function onAttempt( a, b )
       self.selectedVariants.push( a );
       return true;
     }
+
   }
 
   if( arguments.length === 2 )
