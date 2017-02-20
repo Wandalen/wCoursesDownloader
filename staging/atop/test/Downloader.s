@@ -87,18 +87,19 @@ function onAttemptResolution( variant )
 function onAttempt( a, b )
 {
   var self = this;
-  if( !arguments.length )
-  {
-    if( self.resolutionAvaible.length )
-    {
-      self.selectedVariants.push( self.resolutionAvaible.shift() );
-      return true;
-    }
-    return false;
-  }
+  // console.log(arguments);
 
   if( arguments.length === 1 )
   {
+    if( a === Symbol.for( 'any' ) )
+    {
+      if( self.resolutionAvaible.length )
+      {
+        self.selectedVariants.push( self.resolutionAvaible.shift() );
+        return true;
+      }
+      return false;
+    }
     if( self.onAttemptResolution( a ) )
     {
       self.selectedVariants.push( a );
@@ -143,11 +144,12 @@ var Composes =
 {
   formatAvaible : [ 'mp4' ] ,
   formatAllowed : [ 'mp4', 'webm' ],
-  formatPreffered :[ 'webm' ],
+  formatPreffered :[ 'mp4','webm' ],
 
   resolutionAvaible : [ '720p','540p' ],
   resolutionAllowed : [ '720p', '360p', '540p' ],
   resolutionPreffered : [ '720p','360p' ],
+  resolutionKnown : [ '540p','720p','360p' ],
 
   videoVaryFirst : 'format',
   selectedVariants : [],

@@ -8,15 +8,17 @@ var Downloader =   require( '../staging/atop/test/Downloader.s' );
 var downloader = Downloader
 ({
   videoVaryFirst : null,
-  resolutionAvaible : [  ],
-  resolutionAllowed : [ Symbol.for( 'any' ),Symbol.for( 'skip' ) ],
-  resolutionPreffered : [ Symbol.for( 'any' ) ]
+  resolutionAvaible : [ 240,360,720 ],
+  resolutionAllowed : [ 360,720 ],
+  resolutionPreffered : [ 1080 ],
+  resolutionKnown : [ 540, 720, 360 ]
 });
 
 var o =
 {
   allowedName : 'resolutionAllowed',
   prefferedName : 'resolutionPreffered',
+  knownName : 'resolutionKnown',
   target : downloader,
   onAttempt : downloader.onAttempt
 }
@@ -28,7 +30,8 @@ if( downloader.videoVaryFirst === 'format' )
   o.dependsOf =
   {
     allowedName : 'formatAllowed',
-    prefferedName : 'formatPreffered'
+    prefferedName : 'formatPreffered',
+    onAttempt : downloader.onAttempt,
   }
 }
 if( downloader.videoVaryFirst === 'resolution' )
