@@ -105,7 +105,7 @@ function _attempt()
   function _select( src,current )
   {
     if( !src.length )
-    con.error( _.err( current,' is empty!' ) );
+    return con.error( _.err( current,' is empty!' ) );
 
     for( var i = 0, l = src.length; i < l; ++i )
     {
@@ -117,38 +117,32 @@ function _attempt()
       if( self.current === symbolForAny )
       {
         if( current === 'preffered' )
-        _select( allowed, 'allowed' );
+        return _select( allowed, 'allowed' );
         if( current === 'allowed' )
-        _select( known, 'known' );
+        return _select( known, 'known' );
       }
       else
       {
         if( current === 'preffered' )
         if( allowed.indexOf( self.current ) === -1  )
-        {
-          if( i === l - 1 )
-          return _select( allowed, 'allowed' );
-          else
-          continue;
-        }
+        continue;
 
         if( self.onAttempt.call( self.target, self.current ) )
         {
           count++;
-          if( current != 'preffered' )
-          break;
-        }
-
-        if( i === l - 1 && !count )
-        {
-          if( current != 'known' )
-          con.error( "Nothing available" );
+          if( count == preffered.length )
           break;
         }
       }
-
-
     }
+
+    if( current === 'preffered' )
+    if( count != preffered.length )
+    return _select( allowed, 'allowed' );
+
+    if( !count )
+    if( current != 'known' )
+    return con.error( "Nothing available" );
   }
 
   _select( preffered,'preffered' );
