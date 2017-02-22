@@ -72,8 +72,10 @@ function onAttemptFormat( variant )
 function onAttemptResolution( variant )
 {
   var self = this;
-  if( self.resolutionAvaible.indexOf( variant ) != -1 )
+  var i = self.resolutionAvaible.indexOf( variant );
+  if( i != -1 )
   {
+    self.resolutionAvaible.splice( i, 1 );
     return true;
   }
 
@@ -85,14 +87,19 @@ function onAttemptResolution( variant )
 function onAttempt( a, b )
 {
   var self = this;
-  if( !arguments.length )
-  {
-    self.selectedVariants.push( self.resolutionAvaible[0] );
-    return true;
-  }
+  // console.log(arguments);
 
   if( arguments.length === 1 )
   {
+    if( a === Symbol.for( 'any' ) )
+    {
+      if( self.resolutionAvaible.length )
+      {
+        self.selectedVariants.push( self.resolutionAvaible.shift() );
+        return true;
+      }
+      return false;
+    }
     if( self.onAttemptResolution( a ) )
     {
       self.selectedVariants.push( a );
@@ -103,6 +110,7 @@ function onAttempt( a, b )
       self.selectedVariants.push( a );
       return true;
     }
+
   }
 
   if( arguments.length === 2 )
@@ -136,11 +144,12 @@ var Composes =
 {
   formatAvaible : [ 'mp4' ] ,
   formatAllowed : [ 'mp4', 'webm' ],
-  formatPreffered :[ 'webm' ],
+  formatPreffered :[ 'mp4','webm' ],
 
   resolutionAvaible : [ '720p','540p' ],
   resolutionAllowed : [ '720p', '360p', '540p' ],
   resolutionPreffered : [ '720p','360p' ],
+  resolutionKnown : [ '540p','720p','360p' ],
 
   videoVaryFirst : 'format',
   selectedVariants : [],

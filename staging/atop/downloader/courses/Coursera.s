@@ -9,8 +9,8 @@ if( typeof module !== 'undefined' )
   if( typeof wDownloaderOfCourses === 'undefined' )
   require( './Abstract.s' );
 
-  if( typeof wResourceFormat === 'undefined' )
-  require( '../ResourceFormat.s' );
+  if( typeof wParameterVariator === 'undefined' )
+  require( '../../../atop/variator/ParameterVariator.s' );
 }
 
 // constructor
@@ -254,7 +254,7 @@ function _resourcesListRefineAct()
 
       if( type === 'lecture' )
       {
-        con.doThen( _.routineSeal( self,self._resourceVideoUrlGet, [ { element : element, parent : page, videoOnly : 0, subtitles : 'ru' } ] ) );
+        con.doThen( _.routineSeal( self,self._resourceVideoUrlGet, [ { element : element, parent : page, subtitles : 'ru' } ] ) );
 
         var assets = element.content.definition.assets;
         if( assets.length )
@@ -333,7 +333,7 @@ function _resourceVideoUrlGet( o )
   }
 
   var getUrl = _.strReplaceAll( urlOptions );
-  var data;
+  var data,video,resolutions,selectedResolutions;
 
   return self._request( getUrl )
   .doThen( function( err, got )
@@ -345,75 +345,117 @@ function _resourceVideoUrlGet( o )
     if( err )
     throw _.errLogOnce( err );
 
-    var data = JSON.parse( got.body );
+    data = JSON.parse( got.body );
 
     /*video*/
-    var video = _.entitySearch({ src : data, ins : 'byResolution'});
+    video = _.entitySearch({ src : data, ins : 'byResolution'});
     var videoKeys = Object.keys( video );
 
     video = video[ videoKeys[ 0 ] ];
 
-    var resolutions = Object.keys( video );
+    resolutions = Object.keys( video );
+    selectedResolutions = [];
 
-    /*subtitles*/
-    // if( !o.videoOnly )
-    // {
-    //   var sub = _.entitySearch({ src : data, ins : 'subtitles' });
-    //   var subKeys = Object.keys( sub );
-    //
-    //   sub = sub[ subKeys[ 0 ] ];
-    //
-    //   var subtitlesLangs = Object.keys( sub );
-    //
-    //   if( subtitlesLangs.indexOf( o.subtitles ) === -1 )
-    //   throw _.err( 'Unavailable subtitles language: ', o.subtitles, ',available are:', subtitlesLangs );
-    //
-    //   var subUrl = self.config.site + sub[ o.subtitles ];
-    // }
-
-    self.currentResourceFormats = resolutions;
-    return { raw : data, video : video };
-  })
-  .doThen( function( err, got )
-  {
-    data = got;
-    var ResourceFormat = _.ResourceFormat({ target : self, allowedName : 'allowedVideoFormats',prefferedName :'prefferedVideoFormats' });
-    return ResourceFormat.make();
-  })
-  .doThen( function( err, got )
-  {
-    console.log( "Selected formats: ", got );
-    var dataUrl = [];
-    got.forEach( function ( resolution )
+    function onAttemptResolution( variant )
     {
-      var videoUrl = data.video[ resolution ][ o.format + 'VideoUrl' ];
-      dataUrl.push( videoUrl );
+      var i = resolutions.indexOf( variant );
+      if( i != -1 )
+      {
+        selectedResolutions.push( variant );
+        return true;
+      }
+
+      return false;
+    }
+
+    var videoResolutionVariator = _.ParameterVariator
+    ({
+      target : self,
+      allowedName : 'allowedVideoResolutions',
+      prefferedName :'prefferedVideoResolutions',
+      knownName : 'knownVideoResolutions',
+      onAttempt : onAttemptResolution,
     });
 
-    // if( !o.videoOnly )
-    // {
-    //   var resource = {};
-    //   resource.name = '[subtitles] ' + o.element.name;
-    //   resource.id  = o.element.content.definition.videoId;
-    //   resource.kind = self.ResourceKindMapper.valueFor( 'subtitles' );
-    //   resource.dataUrl = subUrl;
-    //   resource.raw =  data;
-    //
-    //   self._resources.push( resource );
-    // }
+    videoResolutionVariator.make()
+    .thenDo( function( err, got )
+    {
+      if( err )
+      throw _.errLogOnce( err );
 
-    var resource = {};
-    resource.name = o.element.name;
-    resource.id  = o.element.content.definition.videoId;
-    resource.kind = self.ResourceKindMapper.valueFor( 'video' );
-    resource.dataUrl = dataUrl;
-    resource.raw =  data.raw;
+      var dataUrl = [];
 
-    self._resources.push( resource );
-    o.parent.elements.push( resource.id );
+      selectedResolutions.forEach( function ( resolution )
+      {
+        dataUrl.push( video[ resolution ][ 'mp4' + 'VideoUrl' ] )
+      });
 
-    return self._resources;
+      var resource = {};
 
+      resource.name = o.element.name;
+      resource.id  = o.element.content.definition.videoId;
+      resource.kind = self.ResourceKindMapper.valueFor( 'video' );
+      resource.dataUrl = dataUrl;
+      resource.raw =  data;
+
+      self._resources.push( resource );
+      o.parent.elements.push( resource.id );
+    });
+
+    /*subtitles*/
+    if( o.subtitles )
+    {
+      var sub = _.entitySearch({ src : data, ins : 'subtitles' });
+      var subKeys = Object.keys( sub );
+
+      sub = sub[ subKeys[ 0 ] ];
+
+      var subtitlesLangs = Object.keys( sub );
+      var selectedSubtitlesLangs = [];
+      var dataUrl = [];
+
+      function onAttemptSubtitles( variant )
+      {
+        var i = subtitlesLangs.indexOf( variant );
+        if( i != -1 )
+        {
+          selectedSubtitlesLangs.push( variant );
+          return true;
+        }
+
+        return false;
+      }
+
+      var subtitlesLangVariator = _.ParameterVariator
+      ({
+        target : self,
+        allowedName : 'allowedSubtitlesLangs',
+        prefferedName :'prefferedSubtitlesLangs',
+        knownName : 'knownSubtitlesLangs',
+        onAttempt : onAttemptSubtitles,
+      });
+
+      subtitlesLangVariator.make()
+      .thenDo( function( err, got )
+      {
+        if( err )
+        throw _.errLogOnce( err );
+
+        selectedSubtitlesLangs.forEach( function ( language )
+        {
+          dataUrl.push( self.config.site + sub[ language ] );
+        });
+
+        var resource = {};
+        resource.name = '[subtitles] ' + o.element.name;
+        resource.id  = o.element.content.definition.videoId;
+        resource.kind = self.ResourceKindMapper.valueFor( 'subtitles' );
+        resource.dataUrl = dataUrl;
+        resource.raw =  data;
+
+        self._resources.push( resource );
+      });
+    }
   });
 }
 
@@ -421,10 +463,7 @@ _resourceVideoUrlGet.defaults =
 {
   element : null,
   parent : null,
-  format : 'mp4',
-  subtitles : 'en',
-
-  videoOnly : true
+  subtitles : true
 }
 
 //
@@ -601,8 +640,18 @@ var Composes =
 
 var Aggregates =
 {
-  prefferedVideoFormats : [ '720p' ],
-  allowedVideoFormats : [ '720p', '360p', '540p' ],
+  prefferedVideoFormats : [ 'mp4' ],
+  allowedVideoFormats : [ 'mp4','webm' ],
+  knownVideoFormats : [ 'mp4','webm' ],
+
+  prefferedVideoResolutions : [ '720p' ],
+  allowedVideoResolutions : [ '720p', '360p', '540p' ],
+  knownVideoResolutions : [ '720p', '360p', '540p' ],
+
+
+  prefferedSubtitlesLangs : [ 'en' ],
+  allowedSubtitlesLangs : [ 'en' ],
+  knownSubtitlesLangs : [ 'en' ],
 }
 
 var Associates =
