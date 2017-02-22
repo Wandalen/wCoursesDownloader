@@ -27,6 +27,7 @@ if( typeof module !== 'undefined' )
 }
 
 var symbolForAny = Symbol.for( 'any' );
+var symbolForSkip = Symbol.for( 'skip' );
 
 // constructor
 
@@ -75,177 +76,194 @@ function make()
   return self._attempt();
 }
 
-//
 
 function _attempt()
 {
   var self = this;
-  var con = new wConsequence().give();
 
-  _.assert( _.strIs( self.prefferedName ) );
-  _.assert( _.strIs( self.allowedName ) );
+  var con = new wConsequence();
 
-  var result = [];
-  var isEmpty;
+  var allowed = self.target[ self.allowedName ];
+  var preffered = self.target[ self.prefferedName ];
+  var known = self.target[ self.knownName ];
 
-  var allowedA  = _.arrayUnique( self.target[ self.allowedName ] );
-  var prefferedA = _.arrayUnique( self.target[ self.prefferedName ] );
+  var count = 0;
 
-  _.assert( _.arrayIs( prefferedA ) && _.arrayIs( allowedA ) )
-
-
-  if( self.dependsOf )
+  function _isTried()
   {
-    _.assert( _.objectIs( self.dependsOf ) );
-    _.assert( _.strIs( self.dependsOf.prefferedName ) && _.strIs( self.dependsOf.allowedName ));
-
-    var allowedB = _.arrayUnique( self.target[ self.dependsOf.allowedName ] );
-    var prefferedB= _.arrayUnique( self.target[ self.dependsOf.prefferedName ] );
-
-    _.assert( _.arrayIs( prefferedB ) && _.arrayIs( allowedB ) );
-
-    if( !prefferedB.length || !allowedB.length )
-    isEmpty = true;
-  }
-
-  if( !isEmpty )
-  if( !prefferedA.length || !allowedA.length )
-  isEmpty = true;
-
-  if( isEmpty )
-  return new wConsequence().give( result );
-
-  function _checkForAny( src )
-  {
-    var res = false;
-    var i = src.indexOf( null );
-    if( i != -1 )
+    if( self.current != symbolForAny )
     {
-      src.splice( i, 1 );
-      res = true;
+      if( self.triedArray.indexOf( self.current ) != -1 )
+      return true;
+
+      self.triedArray.push( self.current );
     }
 
-    i = src.indexOf( symbolForAny );
-    if( i != -1 )
-    {
-      src.splice( i, 1 );
-      res = true;
-    }
-
-    return res;
+    return false;
   }
 
-  var prefferedAnyA = _checkForAny( prefferedA );
-  var allowedAnyA = _checkForAny( allowedA ) ;
-
-  if( self.dependsOf )
+  function _select( src,current )
   {
-    var prefferedAnyB = _checkForAny( prefferedB );
-    var allowedAnyB = _checkForAny( allowedB );
-  }
+    if( !src.length )
+    return con.error( _.err( current,' is empty!' ) );
 
-  _.assert( _.routineIs( self.onAttempt ) );
-
-  function _selectFormat( src )
-  {
-    for( var i = 0; i < src.length; i++ )( function ()
+    for( var i = 0, l = src.length; i < l; ++i )
     {
-      var format = src[ i ];
-      if( allowedA.indexOf( format ) != -1 )
-      con.thenDo( _.routineSeal( self.target, self.onAttempt, [ format ] ) )
-      .thenDo( function( err,got )
+      self.current = src[ i ];
+
+      if( _isTried() )
+      continue;
+
+      if( self.current === symbolForAny )
       {
-        if( got )
-        result.push( format );
-
-        if( format === src[ src.length - 1 ] )
-        return result;
-      });
-    })();
-  }
-
-  //
-
-  function _selectFormatVary( prefferedA, prefferedB )
-  {
-    for( var i = 0; i < prefferedA.length; i++ )( function ()
-    {
-      var formatA = prefferedA[ i ];
-      if( allowedA.indexOf( formatA ) != -1 )
-      for( var j = 0; j < prefferedB.length; j++ )( function ()
+        if( current === 'preffered' )
+        return _select( allowed, 'allowed' );
+        if( current === 'allowed' )
+        return _select( known, 'known' );
+      }
+      else
       {
-        var formatB = prefferedB[ j ];
+        if( current === 'preffered' )
+        if( allowed.indexOf( self.current ) === -1  )
+        continue;
 
-        if( allowedB.indexOf( formatB ) != -1 )
-        con.thenDo( _.routineSeal( self.target, self.onAttempt, [ formatA,formatB ] ) )
-        .thenDo( function( err,got )
+        if( self.onAttempt.call( self.target, self.current ) )
         {
-          if( got )
-          {
-            var res = {};
-            res[ formatB ] = formatA;
-            result.push( res );
-          }
-
-          if( i === prefferedA.length - 1 && j === prefferedB.length - 1)
-          return result;
-        });
-      })();
-    })();
-  }
-
-  if( self.dependsOf )
-  {
-    _selectFormatVary( prefferedA, prefferedB );
-
-    if( !result.length )
-    {
-      if( prefferedAnyA && prefferedAnyB )
-      _selectFormatVary( allowedA, allowedB );
-      else if( prefferedAnyA  )
-      _selectFormatVary( allowedA, prefferedB );
-      else if( prefferedAnyB )
-      _selectFormatVary( prefferedA, allowedB );
+          count++;
+          if( count == preffered.length )
+          break;
+        }
+      }
     }
-  }
-  else
-  {
-    if( prefferedA.length && allowedA.length )
-    _selectFormat( prefferedA );
 
-    if( !result.length && prefferedAny )
-    _selectFormat( allowedA );
-  }
+    if( current === 'preffered' )
+    if( count != preffered.length )
+    return _select( allowed, 'allowed' );
 
-  var allowedAny = allowedAnyA;
-
-  if( self.dependsOf )
-  {
-    allowedAny = allowedAnyA && allowedAnyB;
+    if( !count )
+    if( current != 'known' )
+    return con.error( "Nothing available" );
   }
 
-  if( !result.length && allowedAny )
-  {
-    con.thenDo( _.routineSeal( self.target, self.onAttempt, [] ) )
-    .thenDo( function( err,got )
-    {
-      result = got;
-    });
-  }
+  _select( preffered,'preffered' );
 
-  //
-
-  con.thenDo( function()
-  {
-    if( !result.length )
-    con.error( _.err( "Any of preffered or allowed formats is not available!" ) )
-    else
-    return result;
-  })
-
+  if( count )
+  con.give( true );
 
   return con;
 }
+
+// function _attempt()
+// {
+//   var self = this;
+//
+//   var con = new wConsequence();
+//
+//   var allowed = self.target[ self.allowedName ];
+//   var preffered = self.target[ self.prefferedName ];
+//   var known = self.target[ self.knownName ];
+//
+//   var count = 0;
+//   var allowedAnyUsed = false;
+//
+//   function _isTried( src, i )
+//   {
+//     self.current = src[ i ];
+//
+//     if( self.current != symbolForAny )
+//     {
+//       if( self.triedArray.indexOf( self.current ) != -1 )
+//       return true;
+//
+//       self.triedArray.push( self.current );
+//     }
+//
+//     return false;
+//   }
+//
+//   function _isAvaible()
+//   {
+//     return  self.onAttempt.call( self.target, self.current );
+//   }
+//
+//   function _tryAllowed()
+//   {
+//     for( var j = 0, k = allowed.length; j < k; ++j )
+//     {
+//       if( _isTried( allowed, j ) )
+//       continue;
+//
+//       if( self.current === symbolForAny )
+//       {
+//         if( allowedAnyUsed )
+//         continue;
+//
+//         allowedAnyUsed = true;
+//         if( _tryKnown() )
+//         {
+//           count++;
+//           break;
+//         }
+//       }
+//       else
+//       {
+//         if( _isAvaible() )
+//         {
+//           count++;
+//           break;
+//         }
+//       }
+//
+//
+//       if( j === k - 1 && !count )
+//       con.error( "Nothing available" );
+//     }
+//   }
+//
+//   function _tryKnown()
+//   {
+//     for( var j = 0, k = known.length; j < k; ++j )
+//     {
+//       if( _isTried( known, j ) )
+//       continue;
+//
+//       if( _isAvaible() )
+//       {
+//         count++;
+//         return true;
+//       }
+//
+//       if( j === k - 1 && !count )
+//       con.error( "Nothing available" );
+//     }
+//   }
+//
+//   for( var i = 0, l = preffered.length; i < l; ++i )
+//   {
+//     if( _isTried( preffered, i ) )
+//     continue;
+//
+//     if( self.current === symbolForAny )
+//     _tryAllowed();
+//     else
+//     {
+//       if( allowed.indexOf( self.current ) != -1 )
+//       if( _isAvaible() )
+//       {
+//         count++;
+//         break;
+//       }
+//
+//       if( i === l - 1 && !count )
+//       _tryAllowed();
+//     }
+//   }
+//
+//   if( count )
+//   con.give( true );
+//
+//   return con;
+// }
 
 //
 
@@ -260,6 +278,7 @@ var Composes =
   target : null,
   allowedName : null,
   prefferedName : null,
+  knownName : null,
 
   dependsOf : null,
 
@@ -276,6 +295,8 @@ var Associates =
 
 var Restricts =
 {
+  current : null,
+  triedArray : [],
 }
 
 var Statics =
