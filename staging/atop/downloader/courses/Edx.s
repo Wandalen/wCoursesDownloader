@@ -71,8 +71,8 @@ function _makePrepareHeadersForLogin()
     con.give();
   }
 
-  con.thenDo( _.routineSeal( self,self._request,[ self.config.loginPageUrl ] ) )
-  .thenDo( function( err, got )
+  con.doThen( _.routineSeal( self,self._request,[ self.config.loginPageUrl ] ) )
+  .doThen( function( err, got )
   {
     if( err )
     err = _.err( err );
@@ -99,7 +99,7 @@ function _coursesListAct( )
   _.assert( arguments.length === 0 );
 
   return self._request( self.config.getUserCoursesUrl )
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
 
     if( !err )
@@ -161,7 +161,7 @@ function _resourcesListAct()
   /* */
 
   con = self._request( getUrl )
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
 
     if( !err )

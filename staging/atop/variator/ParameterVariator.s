@@ -152,8 +152,8 @@ function _attempt()
     {
       var format = src[ i ];
       if( allowedA.indexOf( format ) != -1 )
-      con.thenDo( _.routineSeal( self.target, self.onAttempt, [ format ] ) )
-      .thenDo( function( err,got )
+      con.doThen( _.routineSeal( self.target, self.onAttempt, [ format ] ) )
+      .doThen( function( err,got )
       {
         if( got )
         result.push( format );
@@ -177,8 +177,8 @@ function _attempt()
         var formatB = prefferedB[ j ];
 
         if( allowedB.indexOf( formatB ) != -1 )
-        con.thenDo( _.routineSeal( self.target, self.onAttempt, [ formatA,formatB ] ) )
-        .thenDo( function( err,got )
+        con.doThen( _.routineSeal( self.target, self.onAttempt, [ formatA,formatB ] ) )
+        .doThen( function( err,got )
         {
           if( got )
           {
@@ -226,8 +226,8 @@ function _attempt()
 
   if( !result.length && allowedAny )
   {
-    con.thenDo( _.routineSeal( self.target, self.onAttempt, [] ) )
-    .thenDo( function( err,got )
+    con.doThen( _.routineSeal( self.target, self.onAttempt, [] ) )
+    .doThen( function( err,got )
     {
       result = got;
     });
@@ -235,7 +235,7 @@ function _attempt()
 
   //
 
-  con.thenDo( function()
+  con.doThen( function()
   {
     if( !result.length )
     con.error( _.err( "Any of preffered or allowed formats is not available!" ) )

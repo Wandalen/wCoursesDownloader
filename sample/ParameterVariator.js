@@ -44,7 +44,7 @@ if( downloader.videoVaryFirst === 'resolution' )
 var variator = _.ParameterVariator( o );
 debugger;
 variator.make()
-.thenDo( function( err, got )
+.doThen( function( err, got )
 {
   if( err )
   throw _.err( err );

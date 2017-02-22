@@ -24,7 +24,7 @@ dc.download();
 // .ifNoErrorThen( cd._resourcesList )
 // ;
 //
-// con.thenDo( function( err,got )
+// con.doThen( function( err,got )
 // {
 //   if( err )
 //   throw _.errLogOnce( err );

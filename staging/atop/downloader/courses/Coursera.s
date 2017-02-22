@@ -87,7 +87,7 @@ function _coursesListAct()
   _.assert( arguments.length === 0 );
 
   return self._request( self.config.getUserCoursesUrl )
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
 
     if( !err )
@@ -140,7 +140,7 @@ function _resourcesListAct()
   /* */
 
   con = self._request( postUrl )
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
 
     if( !err )
@@ -254,16 +254,16 @@ function _resourcesListRefineAct()
 
       if( type === 'lecture' )
       {
-        con.thenDo( _.routineSeal( self,self._resourceVideoUrlGet, [ { element : element, parent : page, videoOnly : 0, subtitles : 'ru' } ] ) );
+        con.doThen( _.routineSeal( self,self._resourceVideoUrlGet, [ { element : element, parent : page, videoOnly : 0, subtitles : 'ru' } ] ) );
 
         var assets = element.content.definition.assets;
         if( assets.length )
-        con.thenDo( _.routineSeal( self,self._resourceAssetUrlGet, [ element,page ] ) );
+        con.doThen( _.routineSeal( self,self._resourceAssetUrlGet, [ element,page ] ) );
       }
 
       if( type === 'supplement' )
       {
-        con.thenDo( _.routineSeal( self,self._resourceHtmlGet,[ element,page ] ) );
+        con.doThen( _.routineSeal( self,self._resourceHtmlGet,[ element,page ] ) );
       }
     }
 
@@ -336,7 +336,7 @@ function _resourceVideoUrlGet( o )
   var data;
 
   return self._request( getUrl )
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
 
     if( got.response.statusCode !== 200 )
@@ -374,13 +374,13 @@ function _resourceVideoUrlGet( o )
     self.currentResourceFormats = resolutions;
     return { raw : data, video : video };
   })
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
     data = got;
     var ResourceFormat = _.ResourceFormat({ target : self, allowedName : 'allowedVideoFormats',prefferedName :'prefferedVideoFormats' });
     return ResourceFormat.make();
   })
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
     console.log( "Selected formats: ", got );
     var dataUrl = [];
@@ -444,7 +444,7 @@ function _resourceHtmlGet( element, parent )
   var getUrl = _.strReplaceAll( urlOptions );
 
   return self._request( getUrl )
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
     if( err )
     err = _.err( err );
@@ -493,8 +493,8 @@ function _resourceAssetUrlGet( element, parent )
     var id = asset.substr( 0, asset.lastIndexOf('@') );
     getUrl = _.strReplaceAll( self.config.getAssetIdUrl, '{id}', id );
 
-    con.thenDo( _.routineSeal( self,self._request,[ getUrl ] ) )
-    .thenDo( function( err, got )
+    con.doThen( _.routineSeal( self,self._request,[ getUrl ] ) )
+    .doThen( function( err, got )
     {
       if( err )
       err = _.err( err );
@@ -510,7 +510,7 @@ function _resourceAssetUrlGet( element, parent )
       var keys = Object.keys( result );
       return result[ keys[ 0 ] ];
     })
-    .thenDo( function( err, got )
+    .doThen( function( err, got )
     {
       ids.push( got );
       if( ids.length === assets.length )
@@ -521,12 +521,12 @@ function _resourceAssetUrlGet( element, parent )
 
   var resources = [];
 
-  con.thenDo( function( err, got )
+  con.doThen( function( err, got )
   {
     var getUrl = _.strReplaceAll( self.config.getAssetsUrl, '{ids}', ids.join( ',' ) );
 
     return self._request( getUrl )
-    .thenDo( function( err, got )
+    .doThen( function( err, got )
     {
       if( !err )
       if( got.response.statusCode !== 200 )

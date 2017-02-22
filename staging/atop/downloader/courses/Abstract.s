@@ -147,7 +147,7 @@ function _download()
   //   return con.give();
   // })
 
-  con.thenDo( function( err,got )
+  con.doThen( function( err,got )
   {
     // if( self.verbosity )
     // logger.topicDown( 'Downloading of', self.currentCourse, ( err ? 'failed' : 'done' ) + '.' );
@@ -263,7 +263,7 @@ function _login()
   logger.topicUp( 'Login ..' );
 
   con.ifNoErrorThen( _.routineSeal( self,self._request,[ self.config.options ] ) )
-  .thenDo( function( err,got )
+  .doThen( function( err,got )
   {
     if( err )
     err = _.err( err );
@@ -305,7 +305,7 @@ function coursesList()
   var self = this;
 
   self._sync
-  .thenDo( function()
+  .doThen( function()
   {
     return self._coursesList();
   });
@@ -329,7 +329,7 @@ function _coursesList()
   logger.topicUp( 'List courses ..' );
 
   return self._coursesListAct()
-  .thenDo( function( err,got )
+  .doThen( function( err,got )
   {
     if( !err )
     if( Config.debug )
@@ -344,7 +344,7 @@ function _coursesList()
     throw err;
     return got;
   })
-  .thenDo( function( err,courses )
+  .doThen( function( err,courses )
   {
 
     if( self.verbosity )
@@ -405,7 +405,7 @@ function coursePick( src )
   _.assert( arguments.length <= 1 );
 
   self._sync
-  .thenDo( function()
+  .doThen( function()
   {
     return self._coursePick( src );
   });
@@ -463,7 +463,7 @@ function coursePickEither()
   var self = this;
 
   self._sync
-  .thenDo( function()
+  .doThen( function()
   {
     return self._coursePickEither.apply( self,arguments );
   });
@@ -545,7 +545,7 @@ function _coursePickEither()
 //     console.log( _.toStr( self.downloadsList, { levels : 2 } ) );
 //     return con.give();
 //   })
-//   .thenDo( function( err,got )
+//   .doThen( function( err,got )
 //   {
 //     if( self.verbosity )
 //     logger.topicDown( 'Downloading of', self.currentCourse, ( err ? 'failed' : 'done' ) + '.' );
@@ -566,7 +566,7 @@ function resourcesList( course )
   var self = this;
 
   self._sync
-  .thenDo( function()
+  .doThen( function()
   {
     return self._resourcesList( course );
   })
@@ -587,7 +587,7 @@ function _resourcesList()
   _.assert( _.objectIs( self.currentCourse ) );
 
   return self._resourcesListAct()
-  .thenDo( function( err,got )
+  .doThen( function( err,got )
   {
     if( Config.debug )
     {

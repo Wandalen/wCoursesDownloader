@@ -54,7 +54,7 @@ function simpleTest( test )
 
   var rf = _.ParameterVariator( o );
   rf.make()
-  .thenDo( function( err, got )
+  .doThen( function( err, got )
   {
     if( err )
     throw _.err( err );
