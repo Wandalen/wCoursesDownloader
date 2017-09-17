@@ -1,7 +1,7 @@
 {
   "name": "wDownloaderOfCourses",
-  "version": "0.1.0",
-  "engine" : "node >= 5.0.0",
+  "version": "0.1.1",
+  "engine": "node >= 5.0.0",
   "license": "MIT",
   "description": "Module in JavaScript for downloading courses.",
   "author": "Kostiantyn Wandalen <wtory.net@domainsbyproxy.com>",
