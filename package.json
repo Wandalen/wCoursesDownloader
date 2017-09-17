@@ -1,7 +1,7 @@
 {
   "name": "wdownloaderofcourses",
   "version": "0.1.2",
-  "engine": "node >= 5.0.0",
+  "engine": "node >= 6.0.0",
   "license": "MIT",
   "description": "Module in JavaScript for downloading courses.",
   "author": "Kostiantyn Wandalen <wtory.net@domainsbyproxy.com>",
@@ -17,7 +17,7 @@
   ],
   "main": "staging/dwtools/atop/downloader/courses/Abstract.s",
   "files": [
-    "staging/dwtools/amid/color",
+    "staging/dwtools/atop",
     "production"
   ],
   "directories": {
@@ -45,7 +45,8 @@
     "request": ""
   },
   "devDependencies": {
-    "wTesting": ""
+    "wTesting": "",
+    "wdownloaderofcourses": "."
   },
   "keywords": [
     "wTools",
