@@ -6,7 +6,7 @@ try
 }
 catch( err )
 {
-  require( '../staging/atop/downloader/courses/Coursera.s' );
+  require( '../staging/dwtools/atop/downloader/courses/Coursera.s' );
 }
 
 var _ = wTools;

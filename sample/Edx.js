@@ -6,7 +6,7 @@ try
 }
 catch( err )
 {
-  require( '../staging/atop/downloader/courses/Edx.s' );
+  require( '../staging/dwtools/atop/downloader/courses/Edx.s' );
 }
 
 var _ = wTools;

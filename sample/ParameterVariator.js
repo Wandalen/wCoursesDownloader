@@ -1,9 +1,9 @@
 if( typeof module !== 'undefined' )
-require( '../staging/atop/variator/ParameterVariator.s' );
+require( '../staging/dwtools/atop/variator/ParameterVariator.s' );
 
 var _ = wTools;
 
-var Downloader =   require( '../staging/atop/test/Downloader.s' );
+var Downloader =   require( '../staging/dwtools/atop/test/Downloader.s' );
 
 var downloader = Downloader
 ({
