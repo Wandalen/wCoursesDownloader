@@ -10,7 +10,7 @@ if( typeof module !== 'undefined' )
   require( './Abstract.s' );
 
   if( typeof wParameterVariator === 'undefined' )
-  require( '../../../atop/variator/ParameterVariator.s' );
+  require( '../../variator/ParameterVariator.s' );
 }
 
 // constructor
@@ -708,7 +708,7 @@ var Proto =
 
 _.classMake
 ({
-  constructor : Self,
+  cls : Self,
   parent : Parent,
   extend : Proto,
 });
