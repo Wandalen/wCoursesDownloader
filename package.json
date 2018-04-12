@@ -3,7 +3,7 @@
   "version": "0.1.3",
   "engine": "node >= 6.0.0",
   "license": "MIT",
-  "description": "Module in JavaScript for downloading courses.",
+  "description": "The module in JavaScript for downloading courses.",
   "author": "Kostiantyn Wandalen <wtory.net@domainsbyproxy.com>",
   "contributors": [
     {

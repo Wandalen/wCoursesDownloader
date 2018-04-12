@@ -1,5 +1,5 @@
 # wDownloaderOfCourses
-Module in JavaScript for downloading courses.
+The module in JavaScript for downloading courses.
 
 
 

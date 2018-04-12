@@ -192,7 +192,7 @@ function _resourcePageUrlGet( resource )
 {
   var self = this;
 
-  if( resource.kind === self.ResourceKindMapper.valueFor( 'week' ) )
+  if( resource.kind === self.ResourceKindMapper.valFor( 'week' ) )
   {
     var urlOptions =
     {
@@ -240,7 +240,7 @@ function _resourcesListRefineAct()
     if( element.content )
     {
       var type = element.content.typeName;
-      var kind = self.ResourceKindMapper.valueFor( type );
+      var kind = self.ResourceKindMapper.valFor( type );
 
       var page = {};
       page.name = element.name;
@@ -277,13 +277,13 @@ function _resourcesListRefineAct()
 
       if( element.description )
       {
-        resource.kind = self.ResourceKindMapper.valueFor( 'week' );
+        resource.kind = self.ResourceKindMapper.valFor( 'week' );
         ++weekCounter;
         resource.pageUrl = self._resourcePageUrlGet( resource ) + weekCounter;
       }
       else
       {
-        resource.kind = self.ResourceKindMapper.valueFor( 'section' );
+        resource.kind = self.ResourceKindMapper.valFor( 'section' );
         parent.elements.push( resource.id );
       }
 
@@ -394,7 +394,7 @@ function _resourceVideoUrlGet( o )
 
       resource.name = o.element.name;
       resource.id  = o.element.content.definition.videoId;
-      resource.kind = self.ResourceKindMapper.valueFor( 'video' );
+      resource.kind = self.ResourceKindMapper.valFor( 'video' );
       resource.dataUrl = dataUrl;
       resource.raw =  data;
 
@@ -449,7 +449,7 @@ function _resourceVideoUrlGet( o )
         var resource = {};
         resource.name = '[subtitles] ' + o.element.name;
         resource.id  = o.element.content.definition.videoId;
-        resource.kind = self.ResourceKindMapper.valueFor( 'subtitles' );
+        resource.kind = self.ResourceKindMapper.valFor( 'subtitles' );
         resource.dataUrl = dataUrl;
         resource.raw =  data;
 
@@ -501,7 +501,7 @@ function _resourceHtmlGet( element, parent )
     var resource = {};
     resource.name = element.name;
     resource.id  = element.id;
-    resource.kind = self.ResourceKindMapper.valueFor( element.content.definition.assetTypeName );
+    resource.kind = self.ResourceKindMapper.valFor( element.content.definition.assetTypeName );
     resource.raw =  element;
     resource.pageUrl = self._resourcePageUrlGet( resource );
     resource.raw.data =  result[ keys[ 0 ] ];
@@ -584,7 +584,7 @@ function _resourceAssetUrlGet( element, parent )
         var resource = {};
         resource.name = element.name;
         resource.id  = asset.id;
-        resource.kind = self.ResourceKindMapper.valueFor( 'asset' );
+        resource.kind = self.ResourceKindMapper.valFor( 'asset' );
         resource.dataUrl = asset.url;
         resource.raw =  asset;
 

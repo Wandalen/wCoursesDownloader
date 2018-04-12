@@ -230,7 +230,7 @@ function _resourcesListRefineAct()
       resource.id  = data.block_id;
       resource.dataUrl = data.student_view_url;
       resource.pageUrl = data.lms_web_url;
-      resource.kind = self.ResourceKindMapper.valueFor( data.type );
+      resource.kind = self.ResourceKindMapper.valFor( data.type );
       //resource.elements = [];
       resource.elements = data.children || [];
       resource.raw =  data;
