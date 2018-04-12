@@ -8,6 +8,9 @@ if( typeof module !== 'undefined' )
 {
   if( typeof wDownloaderOfCourses === 'undefined' )
   require( './Abstract.s' );
+
+  if( typeof wParameterVariator === 'undefined' )
+  require( '../../variator/ParameterVariator.s' );
 }
 
 // constructor
@@ -330,7 +333,7 @@ var Proto =
 
 _.classMake
 ({
-  constructor : Self,
+  cls : Self,
   parent : Parent,
   extend : Proto,
 });

@@ -17,7 +17,8 @@
   ],
   "main": "staging/dwtools/atop/downloader/courses/Abstract.s",
   "files": [
-    "staging/dwtools/atop",
+    "staging/dwtools/atop/downloader",
+    "staging/dwtools/atop/variator",
     "production"
   ],
   "directories": {

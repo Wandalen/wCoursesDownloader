@@ -273,18 +273,15 @@ function variatorTest( test )
       downloader = Downloader( _case.downloader );
       _case.variator.target = downloader;
       variator = _.ParameterVariator( _case.variator );
-      var con = test.shouldMessageOnlyOnce( variator.make() );
+      var con = variator.make();
       if( _case.shouldThrowError )
-      con = test.shouldThrowError( con );
+      return test.shouldThrowError( con );
       else
-      con.ifNoErrorThen( function ()
+      return con.ifNoErrorThen( function ()
       {
         test.identical( variator.target.selectedVariants, _case.expected );
       });
-
-      return con;
     })
-
   })()
 
   return consequence;
@@ -302,6 +299,7 @@ var Proto =
   },
 
   verbosity : 1,
+  silencing : 1
 
 }
 
@@ -309,5 +307,5 @@ _.mapExtend( Self,Proto );
 Self = wTestSuit( Self );
 
 if( typeof module !== 'undefined' && !module.parent )
-_.Testing.test( Self.name );
+_.Tester.test( Self.name );
 } )( );
