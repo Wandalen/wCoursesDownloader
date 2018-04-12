@@ -1,6 +1,6 @@
 {
   "name": "wdownloaderofcourses",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "engine": "node >= 6.0.0",
   "license": "MIT",
   "description": "The module in JavaScript for downloading courses.",
