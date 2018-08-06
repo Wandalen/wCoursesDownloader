@@ -1,6 +1,7 @@
 {
   "name": "wdownloaderofcourses",
   "version": "0.1.5",
+  "enabled": 0,
   "engine": "node >= 6.0.0",
   "license": "MIT",
   "description": "The module in JavaScript for downloading courses.",
@@ -8,7 +9,7 @@
   "contributors": [
     {
       "name": "Kostiantyn Wandalen",
-      "email": "wanalen@willbe.so>"
+      "email": "wanalen@willbe.so"
     },
     {
       "name": "Volodymyr M.",
